@@ -645,6 +645,42 @@ class RunsTest < Minitest::Test
   end
 end
 
+class DigestFormatTest < Minitest::Test
+  def test_titles
+    assert_equal 'Air quality digest — Hawcliffe Rd, Fri 3 Jul 2026',
+                 Dust::Alerts.digest_title('2026-07-03', '2026-07-03')
+    assert_equal 'Air quality digest — Hawcliffe Rd, Mon 29 Jun 2026 to Fri 3 Jul 2026',
+                 Dust::Alerts.digest_title('2026-06-29', '2026-07-03')
+  end
+
+  def test_body_sections
+    episodes = [{ species: 'no2', start: '2026-06-23T18:00:00Z', last: '2026-06-23T20:00:00Z',
+                  ongoing: false, peak: 235.6, others_mean: 77.4 }]
+    limit_titles = ['NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 2nd exceedance this year, 18 permitted']
+    problems = ['2026-06-23: only 11/24 hourly NO₂ values reported']
+    day_means = { '2026-06-23' => { '682' => { 'no2' => 81.4, 'pm25' => nil } } }
+    aliases = { '682' => 'Hawcliffe Rd., Mountsorrel' }
+    body = Dust::Alerts.digest_body(episodes, limit_titles, problems, day_means, aliases)
+    assert_includes body, '## Elevated vs other stations'
+    assert_includes body, '**NO₂** 23 Jun 19:00–23 Jun 21:00: peak **235.6 µg/m³** vs 77.4 across the other stations (3.0×)'
+    assert_includes body, '## Over EU legal limits'
+    assert_includes body, '2nd exceedance this year'
+    assert_includes body, '## Data problems'
+    assert_includes body, '## Daily means (µg/m³)'
+    assert_includes body, '| Hawcliffe Rd., Mountsorrel | 81.4 | – |'
+    assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
+  end
+
+  def test_body_omits_empty_sections_and_marks_ongoing
+    episodes = [{ species: 'pm25', start: '2026-07-03T01:00:00Z', last: '2026-07-03T04:00:00Z',
+                  ongoing: true, peak: 22.0, others_mean: 5.5 }]
+    body = Dust::Alerts.digest_body(episodes, [], [], {}, {})
+    assert_includes body, '(ongoing)'
+    refute_includes body, '## Over EU legal limits'
+    refute_includes body, '## Data problems'
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

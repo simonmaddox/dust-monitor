@@ -369,6 +369,60 @@ module Dust
       lines.join("\n")
     end
 
+    def pretty_day(day)
+      Date.parse(day).strftime('%a %-d %b %Y')
+    end
+
+    def digest_title(from_day, to_day)
+      range = from_day == to_day ? pretty_day(from_day) : "#{pretty_day(from_day)} to #{pretty_day(to_day)}"
+      "Air quality digest — Hawcliffe Rd, #{range}"
+    end
+
+    def digest_body(episodes, limit_titles, problems, day_means, aliases)
+      lines = []
+      unless episodes.empty?
+        lines << '## Elevated vs other stations'
+        episodes.each do |e|
+          ratio = e[:others_mean].positive? ? e[:peak] / e[:others_mean] : Float::INFINITY
+          lines << format('- **%s** %s–%s%s: peak **%.1f µg/m³** vs %.1f across the other stations (%.1f×)',
+                          LABELS[e[:species]], london(e[:start]), london(e[:last]),
+                          e[:ongoing] ? ' (ongoing)' : '', e[:peak], e[:others_mean], ratio)
+        end
+        lines << ''
+      end
+      unless limit_titles.empty?
+        lines << '## Over EU legal limits'
+        limit_titles.each { |t| lines << "- #{t}" }
+        lines << ''
+        lines << '_Limits are the EU values currently in force (Directive 2008/50/EC, carried ' \
+                 'by the 2024/2881 recast until 2030 — see the README for what tightens then)._'
+        lines << ''
+      end
+      unless problems.empty?
+        lines << '## Data problems'
+        problems.each { |p| lines << "- #{p}" }
+        lines << ''
+      end
+      unless day_means.empty?
+        lines << '## Daily means (µg/m³)'
+        day_means.keys.sort.each do |day|
+          lines << ''
+          lines << "**#{pretty_day(day)}**"
+          lines << ''
+          lines << '| Station | NO₂ | PM2.5 |'
+          lines << '|---|---|---|'
+          aliases.each do |id, name|
+            m = day_means[day][id] || {}
+            cells = %w[no2 pm25].map { |sp| m[sp] ? m[sp].round(1) : '–' }
+            lines << "| #{name} | #{cells.join(' | ')} |"
+          end
+        end
+        lines << ''
+      end
+      lines << "[View the portal](#{PORTAL_URL})"
+      lines.join("\n")
+    end
+
     def london(hour)
       t = Time.parse(hour)
       t.getlocal(bst?(t) ? '+01:00' : '+00:00').strftime('%d %b %H:%M')
