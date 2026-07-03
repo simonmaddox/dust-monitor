@@ -34,9 +34,10 @@ module Dust
   DAILY_MIN_HOURS = 18 # 75% data capture, per the directive
   ANNUAL_MIN_HOURS = 720
   PERSIST_HOURS = 2
-  QUIET_HOURS = 6
   MIN_COMPARATORS = 2
-  LOOKBACK_HOURS = 12
+  CONTEXT_HOURS = 6    # window context before the first reported day, for run continuity
+  FETCH_MIN_HOURS = 42 # always refetch at least this far back (covers a digest day + margin)
+  DIGEST_MAX_DAYS = 7  # cap on catch-up after outages
   ROOT = File.expand_path(__dir__)
 
   def self.slugify(name)
@@ -158,7 +159,6 @@ module Dust
   end
 
   module Episodes
-    EMPTY = { 'active' => false, 'since' => nil, 'last_alert' => nil }.freeze
     module_function
 
     # Maximal runs of adjacent qualifying hours with length >= PERSIST_HOURS.
@@ -183,46 +183,6 @@ module Dust
 
     def new_runs(hours, qualifying, since)
       runs(hours, qualifying).select { |r| since.nil? || r[:start] > since }
-    end
-
-    def step(state, hours, qualifying, now: Time.now.utc)
-      state = EMPTY.merge(state || {})
-      recent = hours.last(QUIET_HOURS)
-      if state['active'] && recent.any? && recent.none? { |h| qualifying.include?(h) }
-        state = state.merge('active' => false)
-      end
-      return [state, nil] if state['active']
-
-      run_start = live_run_start(hours, qualifying)
-      if run_start && (state['since'].nil? || run_start > state['since'])
-        [state.merge('active' => true, 'since' => run_start,
-                     'last_alert' => now.strftime('%Y-%m-%dT%H:%M:%SZ')), run_start]
-      else
-        [state, nil]
-      end
-    end
-
-    # Start of the newest qualifying run of >= PERSIST_HOURS adjacent hours
-    # whose last hour falls in the final QUIET_HOURS of the window.
-    def live_run_start(hours, qualifying)
-      live = hours.last(QUIET_HOURS)
-      runs = []
-      current = nil
-      hours.each do |h|
-        unless qualifying.include?(h)
-          current = nil
-          next
-        end
-        if current && Time.parse(h) - Time.parse(current[:last]) == 3600
-          current[:last] = h
-          current[:len] += 1
-        else
-          current = { start: h, last: h, len: 1 }
-          runs << current
-        end
-      end
-      run = runs.select { |r| r[:len] >= PERSIST_HOURS && live.include?(r[:last]) }.last
-      run && run[:start]
     end
   end
 
@@ -297,33 +257,6 @@ module Dust
   module Alerts
     LABELS = { 'no2' => 'NO₂', 'pm25' => 'PM2.5' }.freeze
     module_function
-
-    def title(species, value, others_mean)
-      ratio = others_mean.positive? ? value / others_mean : Float::INFINITY
-      format('%s elevated at Hawcliffe Rd: %.0f µg/m³ vs %.0f across other stations (%.1f×)',
-             LABELS[species], value, others_mean, ratio)
-    end
-
-    def body(species, run_start, hours, series, stations, target_id)
-      rule = RULES[species]
-      lines = []
-      lines << format('**%s** at **%s** has been ≥%.1f× the average of the other stations ' \
-                      '(and ≥%.0f µg/m³ above it) since %s.',
-                      LABELS[species], stations[target_id], rule[:ratio], rule[:diff], london(run_start))
-      lines << ''
-      lines << "| Hour (London) | #{stations.values.join(' | ')} |"
-      lines << "|#{'---|' * (stations.size + 1)}"
-      hours.last(6).each do |h|
-        cells = stations.keys.map do |id|
-          v = (series["#{species}_#{id}"] || {})[h]
-          v ? v.round(1) : '–'
-        end
-        lines << "| #{london(h)} | #{cells.join(' | ')} |"
-      end
-      lines << ''
-      lines << "All values µg/m³, hourly averages. [View the portal](#{PORTAL_URL})"
-      lines.join("\n")
-    end
 
     PERIOD_LABELS = { hourly: 'hourly', daily: 'daily', annual: 'annual' }.freeze
 
@@ -547,7 +480,7 @@ module Dust
       each_month_chunk(fetch_start, @now) do |c_from, c_to|
         stations.each { |z| @archive.append(rows_for(z, c_from, c_to)) }
       end
-      evaluate(target, stations - [target])
+      digest(target, stations - [target])
     end
 
     def backfill
@@ -617,7 +550,7 @@ module Dust
     end
 
     def fetch_start
-      lookback = @now - LOOKBACK_HOURS * 3600
+      lookback = @now - FETCH_MIN_HOURS * 3600
       last = @archive.last_hour
       last ? [Time.parse(last) + 3600, lookback].min : lookback
     end
@@ -643,53 +576,97 @@ module Dust
       rows
     end
 
-    def evaluate(target, others)
-      end_hour = (@now - 3600).strftime('%Y-%m-%dT%H:00:00Z')
-      hours, series = @archive.window(LOOKBACK_HOURS, end_hour)
+    def digest(target, others)
       state = load_state
-      station_map = ([target] + others).to_h { |z| [z['zNumber'], z['alias']] }
-      alerts = []
-
-      RULES.each do |species, rule|
-        tseries = Limits.plausible(series[col(species, target)], species)
-        oseries = others.map { |z| Limits.plausible(series[col(species, z)], species) }
-        qualifying = Rules.qualifying_hours(tseries, oseries,
-                                            ratio: rule[:ratio], diff: rule[:diff])
-        new_state, run_start = Episodes.step(state[species], hours, qualifying, now: @now)
-        if run_start
-          # headline the episode's peak hour, not merely the latest
-          peak = hours.select { |h| qualifying.include?(h) }.max_by { |h| tseries[h] }
-          vals = oseries.map { |o| o[peak] }.compact
-          mean = vals.sum / vals.size
-          alerts << [Alerts.title(species, tseries[peak], mean),
-                     Alerts.body(species, run_start, hours, series, station_map, target['zNumber'])]
-        end
-        state[species] = new_state
-        puts "#{species}: #{qualifying.size}/#{hours.size} qualifying hours, " \
-             "active=#{new_state['active']}#{run_start ? ", ALERT (since #{run_start})" : ''}"
+      today = @now.to_date
+      to_day = today - 1
+      from_day = state['last_digest_day'] ? Date.parse(state['last_digest_day']) + 1 : to_day
+      from_day = to_day - (DIGEST_MAX_DAYS - 1) if to_day - from_day >= DIGEST_MAX_DAYS
+      if from_day > to_day
+        puts "digest: #{to_day} already digested, nothing to report"
+        return
       end
 
+      end_hour = (@now - 3600).strftime('%Y-%m-%dT%H:00:00Z')
+      window_start_t = Time.utc(from_day.year, from_day.month, from_day.day) - CONTEXT_HOURS * 3600
+      hours_back = ((Time.parse(end_hour) - window_start_t) / 3600).to_i + 1
+      hours, series = @archive.window(hours_back, end_hour)
+      report_days = (from_day..to_day).map(&:to_s)
+
+      episodes = []
+      RULES.each do |species, rule|
+        tseries = Limits.plausible(series[col(species, target)] || {}, species)
+        oseries = others.map { |z| Limits.plausible(series[col(species, z)] || {}, species) }
+        qualifying = Rules.qualifying_hours(tseries, oseries,
+                                            ratio: rule[:ratio], diff: rule[:diff])
+        since = (state[species] || {})['since']
+        Episodes.new_runs(hours, qualifying, since).each do |r|
+          run_hours = hours.select { |h| h >= r[:start] && h <= r[:last] }
+          peak = run_hours.max_by { |h| tseries[h] || 0.0 }
+          vals = oseries.map { |o| o[peak] }.compact
+          episodes << { species: species, start: r[:start], last: r[:last],
+                        ongoing: r[:last] == hours.last,
+                        peak: tseries[peak],
+                        others_mean: vals.empty? ? 0.0 : vals.sum / vals.size }
+          since = [since, r[:start]].compact.max
+        end
+        state[species] = { 'since' => since }
+      end
+
+      limit_titles = []
       limits_state = state['limits'] || {}
       RULES.each_key do |species|
         year_series = @archive.column_year(col(species, target), @now.year)
         new_ls, limit_alerts = Limits.check(species, year_series, limits_state[species],
-                                            window_start: hours.first || end_hour,
-                                            today: @now.to_date)
-        limit_alerts.each do |period, items, value, count|
-          allowed = LIMITS[species][period][:allowed]
-          alerts << [Alerts.limit_title(species, period, value, count, allowed),
-                     Alerts.limit_body(species, period, items, count, allowed)]
+                                            window_start: window_start_t.strftime('%Y-%m-%dT%H:00:00Z'),
+                                            today: today)
+        limit_alerts.each do |period, _items, value, count|
+          limit_titles << Alerts.limit_title(species, period, value, count,
+                                             LIMITS[species][period][:allowed])
         end
         limits_state[species] = new_ls
-        puts "limits #{species}: #{limit_alerts.map { |p, *_| p }.join(',')}" unless limit_alerts.empty?
       end
       state['limits'] = limits_state
 
+      problems = []
+      day_means = {}
+      target_id = target['zNumber'].to_s
+      report_days.each do |day|
+        day_means[day] = {}
+        ([target] + others).each do |z|
+          id = z['zNumber'].to_s
+          means = {}
+          RULES.each_key do |species|
+            raw_day = (series[col(species, z)] || {}).select { |h, _| h[0, 10] == day }
+            good = Limits.plausible(raw_day, species)
+            means[species] = good.empty? ? nil : good.values.sum / good.size
+            if id == target_id
+              dropped = raw_day.size - good.size
+              problems << "#{day}: #{dropped} implausible #{Alerts::LABELS[species]} reading(s) filtered" if dropped.positive?
+              problems << "#{day}: only #{good.size}/24 hourly #{Alerts::LABELS[species]} values reported" if good.size < DAILY_MIN_HOURS
+            end
+          end
+          day_means[day][id] = means
+        end
+      end
+
+      noteworthy = episodes.any? || limit_titles.any? || problems.any?
+      puts "digest #{from_day}..#{to_day}: #{episodes.size} episode(s), " \
+           "#{limit_titles.size} limit event(s), #{problems.size} data problem(s)"
+      if noteworthy
+        title = Alerts.digest_title(from_day.to_s, to_day.to_s)
+        aliases = ([target] + others).to_h { |z| [z['zNumber'].to_s, z['alias']] }
+        body = Alerts.digest_body(episodes, limit_titles, problems, day_means, aliases)
+        if @dry_run
+          puts "dry-run digest: #{title}\n#{body}"
+        else
+          @notifiers.each { |n| n.notify(title, body) }
+        end
+      end
+      state['last_digest_day'] = to_day.to_s
       if @dry_run
         puts "dry-run: state not written: #{JSON.generate(state)}"
-        alerts.each { |t, b| puts "dry-run alert: #{t}\n#{b}" }
       else
-        alerts.each { |t, b| @notifiers.each { |n| n.notify(t, b) } }
         write_json('state.json', state)
       end
     end
@@ -697,11 +674,12 @@ module Dust
     def load_state
       path = File.join(@root, 'state.json')
       raw = File.exist?(path) ? JSON.parse(File.read(path)) : {}
-      state = RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.merge(raw[sp] || {})] }
+      state = RULES.keys.to_h { |sp| [sp, { 'since' => (raw[sp] || {})['since'] }] }
       state['limits'] = raw['limits'] || {}
+      state['last_digest_day'] = raw['last_digest_day']
       state
     rescue JSON::ParserError
-      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.dup] }.merge('limits' => {})
+      RULES.keys.to_h { |sp| [sp, { 'since' => nil }] }.merge('limits' => {}, 'last_digest_day' => nil)
     end
 
     def write_json(name, obj)
@@ -717,7 +695,9 @@ if $PROGRAM_NAME == __FILE__
     Dust::Monitor.new(dry_run: ARGV.include?('--dry-run')).run
   when 'backfill'
     Dust::Monitor.new.backfill
+  when 'migrate-columns'
+    Dust::Monitor.new(client: nil).migrate_columns
   else
-    abort 'usage: ruby monitor.rb [run [--dry-run] | backfill]'
+    abort 'usage: ruby monitor.rb [run [--dry-run] | backfill | migrate-columns]'
   end
 end
