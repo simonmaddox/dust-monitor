@@ -614,6 +614,37 @@ class MigrateColumnsTest < Minitest::Test
   end
 end
 
+class RunsTest < Minitest::Test
+  def hours(n, from: Time.utc(2026, 7, 3, 0))
+    (0...n).map { |i| (from + i * 3600).strftime('%Y-%m-%dT%H:00:00Z') }
+  end
+
+  def test_detects_runs_of_two_or_more
+    w = hours(12)
+    runs = Dust::Episodes.runs(w, Set[w[3], w[4], w[5], w[8]])
+    assert_equal [{ start: w[3], last: w[5], len: 3 }], runs
+  end
+
+  def test_ignores_isolated_hours
+    w = hours(12)
+    assert_empty Dust::Episodes.runs(w, Set[w[2], w[6]])
+  end
+
+  def test_non_adjacent_qualifying_hours_split
+    w = hours(12)
+    runs = Dust::Episodes.runs(w, Set[w[1], w[2], w[7], w[8], w[9]])
+    assert_equal [w[1], w[7]], runs.map { |r| r[:start] }
+  end
+
+  def test_new_runs_since_dedupe
+    w = hours(12)
+    q = Set[w[1], w[2], w[7], w[8]]
+    assert_equal [w[1], w[7]], Dust::Episodes.new_runs(w, q, nil).map { |r| r[:start] }
+    assert_equal [w[7]], Dust::Episodes.new_runs(w, q, w[1]).map { |r| r[:start] }
+    assert_empty Dust::Episodes.new_runs(w, q, w[7])
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

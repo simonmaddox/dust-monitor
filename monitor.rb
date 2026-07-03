@@ -161,6 +161,30 @@ module Dust
     EMPTY = { 'active' => false, 'since' => nil, 'last_alert' => nil }.freeze
     module_function
 
+    # Maximal runs of adjacent qualifying hours with length >= PERSIST_HOURS.
+    def runs(hours, qualifying)
+      out = []
+      current = nil
+      hours.each do |h|
+        unless qualifying.include?(h)
+          current = nil
+          next
+        end
+        if current && Time.parse(h) - Time.parse(current[:last]) == 3600
+          current[:last] = h
+          current[:len] += 1
+        else
+          current = { start: h, last: h, len: 1 }
+          out << current
+        end
+      end
+      out.select { |r| r[:len] >= PERSIST_HOURS }
+    end
+
+    def new_runs(hours, qualifying, since)
+      runs(hours, qualifying).select { |r| since.nil? || r[:start] > since }
+    end
+
     def step(state, hours, qualifying, now: Time.now.utc)
       state = EMPTY.merge(state || {})
       recent = hours.last(QUIET_HOURS)
