@@ -19,13 +19,16 @@ module Dust
     'no2'  => { ratio: 2.5, diff: 30.0 },
     'pm25' => { ratio: 1.5, diff: 5.0 }
   }.freeze
-  # EU Directive 2024/2881 Annex I limit values (apply from 1 Jan 2030)
+  # EU limit values currently in force (2008/50/EC values, carried by the
+  # 2024/2881 recast until 1 Jan 2030). The stricter 2030 values — NO2 hourly
+  # allowance 18 -> 3, NO2 annual 40 -> 20, PM2.5 annual 25 -> 10, plus new
+  # daily limits (NO2 50, PM2.5 25, 18 exceedances each) — are documented in
+  # the README; switch these constants when they take effect. The :daily
+  # machinery in Limits.check is already built and tested for that day.
   LIMITS = {
-    'no2'  => { hourly: { limit: 200.0, allowed: 3 },
-                daily:  { limit: 50.0,  allowed: 18 },
-                annual: { limit: 20.0 } },
-    'pm25' => { daily:  { limit: 25.0,  allowed: 18 },
-                annual: { limit: 10.0 } }
+    'no2'  => { hourly: { limit: 200.0, allowed: 18 },
+                annual: { limit: 40.0 } },
+    'pm25' => { annual: { limit: 25.0 } }
   }.freeze
   PLAUSIBLE_MAX = { 'no2' => 1000.0, 'pm25' => 500.0 }.freeze
   DAILY_MIN_HOURS = 18 # 75% data capture, per the directive
@@ -110,8 +113,7 @@ module Dust
 
     # Evaluate all EU limit checks for one species over a calendar year of data.
     # Returns [new_state, alerts]; alerts are [period, items, headline_value, ytd_count].
-    def check(species, year_series, state, window_start:, today:)
-      cfg = LIMITS.fetch(species)
+    def check(species, year_series, state, window_start:, today:, cfg: LIMITS.fetch(species))
       state = { 'hourly' => {}, 'daily' => {}, 'annual' => {} }.merge(state || {})
       series = plausible(year_series, species)
       alerts = []
@@ -333,8 +335,9 @@ module Dust
                  '**Hawcliffe Rd., Mountsorrel** is above the EU annual limit.'
       end
       lines << ''
-      lines << '_Limits are the EU 2030 values (Directive (EU) 2024/2881); they are ' \
-               "stricter than current UK law._ [View the portal](#{PORTAL_URL})"
+      lines << '_Limits are the EU values currently in force (Directive 2008/50/EC, carried ' \
+               'by the 2024/2881 recast until 2030 — see the README for what tightens then)._ ' \
+               "[View the portal](#{PORTAL_URL})"
       lines.join("\n")
     end
 

@@ -93,19 +93,21 @@ the episode), `last_alert` (ISO timestamp).
   never a crash. On a fresh start the evaluation window comes from the archive, so
   state is derived from real recent history rather than cold.
 
-## EU legal limit checks (amendment, 2026-07-03)
+## EU legal limit checks (amendment, 2026-07-03; revised same day)
 
 In addition to the relative elevation rules, every run checks Hawcliffe's absolute
-levels against the EU limit values of Directive (EU) 2024/2881 Annex I (binding from
-1 Jan 2030; stricter than current UK law — chosen deliberately):
+levels against the EU limit values **currently in force** (Directive 2008/50/EC,
+carried by the 2024/2881 recast until 1 Jan 2030). Originally the stricter 2030
+values were used; revised on request so alerts mean "this is over the limit that
+applies today". The 2030 values and changeover are documented in the README, and
+the daily-mean machinery stays implemented (tested via config injection) but
+unconfigured until then.
 
 | Species | Period | Limit | Allowed exceedances |
 |---|---|---|---|
-| NO₂ | 1 hour | 200 µg/m³ | 3 / calendar year |
-| NO₂ | 1 day (UTC mean) | 50 µg/m³ | 18 / calendar year |
-| NO₂ | calendar year mean | 20 µg/m³ | — |
-| PM2.5 | 1 day (UTC mean) | 25 µg/m³ | 18 / calendar year |
-| PM2.5 | calendar year mean | 10 µg/m³ | — |
+| NO₂ | 1 hour | 200 µg/m³ | 18 / calendar year |
+| NO₂ | calendar year mean | 40 µg/m³ | — |
+| PM2.5 | calendar year mean | 25 µg/m³ | — |
 
 - **Counts are stateless**: year-to-date exceedance tallies are recomputed from the
   archive on every run; only alert *dedupe* lives in state.
