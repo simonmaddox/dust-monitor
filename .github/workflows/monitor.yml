@@ -1,7 +1,7 @@
 name: monitor
 on:
   schedule:
-    - cron: '15 * * * *'   # :15 past the hour, after hourly averages settle
+    - cron: '15 6 * * *'   # daily digest at 06:15 UTC, after the previous UTC day settles
   workflow_dispatch:
     inputs:
       mode:

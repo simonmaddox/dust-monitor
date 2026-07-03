@@ -1,45 +1,44 @@
 # dust
 
-Monitors air quality at **Hawcliffe Rd., Mountsorrel** (Leicestershire, UK) and
-raises an alert when it is either *unusually elevated compared to its neighbouring
-stations* or *over the EU legal limits*. Data comes from Leicestershire County
-Council's public [EarthSense portal](https://portal.earthsense.co.uk/LeicestershireCCPublic);
-the monitor runs unattended on GitHub Actions every hour and alerts by opening a
-GitHub Issue on this repo.
+Monitors air quality at **Hawcliffe Rd., Mountsorrel** (Leicestershire, UK) and posts
+a **daily digest** when something noteworthy happened: the station was *unusually
+elevated compared to its neighbours*, it went *over the EU legal limits*, or its data
+looks broken. Data comes from Leicestershire County Council's public
+[EarthSense portal](https://portal.earthsense.co.uk/LeicestershireCCPublic); the
+monitor runs unattended on GitHub Actions and notifies by opening a GitHub Issue on
+this repo. Quiet days produce nothing — a notification always means something.
 
 ## How it works
 
-Each hourly run:
+Every morning at 06:15 UTC the workflow:
 
 1. Authenticates against the EarthSense API (public portals use the portal slug as
    both username and password — there are no secrets in this repo).
-2. Discovers the network's stations dynamically, fetches the latest hourly averages
-   for NO₂ and PM2.5, and appends them to the CSV archive in `history/` (complete
-   hourly data back to March 2021; gaps self-heal on the next run).
-3. Evaluates two kinds of rule (below) against the archive.
-4. Opens a GitHub Issue for anything new, and commits the updated archive and
-   episode state back to the repo.
+2. Discovers the network's stations, fetches recent hourly NO₂/PM2.5 averages, and
+   appends them to the archive in `history/` (complete hourly data back to March
+   2021; missed runs self-heal).
+3. Evaluates the previous UTC day (or days, after an outage) against the rules below.
+4. If anything is noteworthy, opens a single digest issue with only the sections that
+   occurred plus a table of every station's daily means; commits updated data either way.
 
-Implausible sensor readings (negative, NO₂ > 1,000 µg/m³, PM2.5 > 500 µg/m³) are
-ignored by all checks — the Hawcliffe PM2.5 sensor once spent several weeks in 2025
-reporting up to 2,813 µg/m³. Raw values are kept in the archive untouched.
+Implausible readings (negative, NO₂ > 1,000 µg/m³, PM2.5 > 500 µg/m³) are excluded
+from evaluation and *reported as data problems* — the Hawcliffe PM2.5 sensor once
+spent weeks in 2025 claiming up to 2,813 µg/m³. Raw values stay in the archive.
 
-### Rule 1: elevated vs the other stations
+### Digest triggers
 
-Fires when Hawcliffe is far above the average of the network's other stations,
-sustained for 2 consecutive hours:
+**Elevated vs the other stations** — a run of ≥ 2 consecutive hours where Hawcliffe
+is far above the average of the other stations (thresholds calibrated on 5 weeks of
+real data):
 
-| Species | Threshold (calibrated on 5 weeks of real data) |
+| Species | Threshold |
 |---|---|
 | NO₂ | ≥ 2.5× the others' mean **and** ≥ 30 µg/m³ above it |
 | PM2.5 | ≥ 1.5× the others' mean **and** ≥ 5 µg/m³ above it |
 
-One alert per episode; it re-arms after 6 consecutive quiet hours.
-
-### Rule 2: over the EU legal limits
-
-Checks Hawcliffe's absolute levels against the EU limit values **currently in
-force** (Directive 2008/50/EC, carried by the 2024 recast until 2030):
+**Over the EU legal limits** — the values currently in force (Directive 2008/50/EC,
+carried by the 2024 recast until 2030), with year-to-date exceedance tallies
+recomputed from the archive:
 
 | Species | Period | Limit | Permitted exceedances |
 |---|---|---|---|
@@ -47,15 +46,15 @@ force** (Directive 2008/50/EC, carried by the 2024 recast until 2030):
 | NO₂ | calendar year mean | 40 µg/m³ | — |
 | PM2.5 | calendar year mean | 25 µg/m³ | — |
 
-Alerts include the year-to-date exceedance tally (recomputed from the archive, so
-there are no counters to corrupt), e.g. *"NO₂ over EU hourly limit at Hawcliffe Rd:
-236 µg/m³ (limit 200) — 5th exceedance this year, 18 permitted"*. Hawcliffe has
-breached this regime once in the archive: 19 exceedance hours in 2021 (peak
-386 µg/m³) against the 18 permitted.
+Hawcliffe has breached this regime once in the archive: 19 exceedance hours in 2021
+(peak 386 µg/m³) against the 18 permitted.
+
+**Data problems** — a day where Hawcliffe reported fewer than 18 of 24 hourly values,
+or where implausible readings had to be filtered.
 
 ## What changes in 2030
 
-Directive (EU) 2024/2881 replaces these limits on **1 January 2030** with much
+Directive (EU) 2024/2881 replaces the current limits on **1 January 2030** with much
 stricter ones, aligned closer to WHO guidance:
 
 | Species | Period | Now | From 2030 |
@@ -69,25 +68,44 @@ stricter ones, aligned closer to WHO guidance:
 This matters locally: Hawcliffe's current behaviour would already breach the 2030
 hourly NO₂ rule (4 exceedance hours by June 2026, vs 3 permitted per year), and its
 2025 annual means (NO₂ 18.6, PM2.5 9.2 µg/m³) sit just under the 2030 annual limits.
-The daily-mean checking machinery is already implemented and tested; when the 2030
-values take effect, updating the `LIMITS` constant at the top of `monitor.rb` is the
-only change needed.
+The daily-mean machinery is implemented and tested; when the 2030 values take
+effect, updating the `LIMITS` constant at the top of `monitor.rb` is the only change
+needed. (The UK is not bound by the 2024 directive post-Brexit; current UK law
+retains the same values as the "Now" column.)
 
-(The UK is not bound by the 2024 directive post-Brexit; current UK law retains the
-same values as the "Now" column.)
+## Data format
+
+`history/<year>.csv` — one row per UTC hour, one file per year:
+
+```
+hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd_loughborough,...
+2026-06-23T19:00:00Z,235.58,9.22,18.41,...
+```
+
+- `hour_utc` — start of the hour, UTC, ISO 8601. Values are hourly means in µg/m³.
+- Columns are `<species>_<station slug>`; the slug is assigned from the station's
+  name the first time it is seen and **pinned** in `stations.json` (which maps
+  EarthSense station ids to `{alias, slug}`), so later renames never fork columns.
+- An empty cell means no reading. Values are raw as served by the API — including
+  implausible ones; filtering happens at evaluation time, not in the archive.
+- Stations appear from their install dates (Hawcliffe/March 2021 onward; the full
+  five-station network from 2026).
 
 ## Running it
 
 ```
-ruby monitor.rb run             # one monitoring pass (fetch, evaluate, alert, save)
-ruby monitor.rb run --dry-run   # same, but print the evaluation and write nothing
+ruby monitor.rb run             # one digest pass (fetch, evaluate, notify, save)
+ruby monitor.rb run --dry-run   # same, but print the digest and write nothing
 ruby monitor.rb backfill        # (re)populate history/ from the API's full history
+ruby monitor.rb migrate-columns # one-off: rewrite old id-based CSV headers to slugs
 ruby test/monitor_test.rb       # test suite
 ```
 
-Plain Ruby stdlib (2.6+), no gems. The GitHub Actions workflow
-(`.github/workflows/monitor.yml`) runs `monitor.rb run` hourly at :15 and can be
-dispatched manually in `run`, `dry-run`, or `backfill` mode.
+Plain Ruby stdlib (2.6+), no gems. The workflow (`.github/workflows/monitor.yml`)
+runs daily at 06:15 UTC and can be dispatched manually in `run`, `dry-run`, or
+`backfill` mode. To restore immediate (hourly) alerting instead of the daily digest,
+set the cron back to `15 * * * *` and see the git history of the digest change for
+the previous episode semantics.
 
 Design docs: `docs/superpowers/specs/` (what and why, including threshold
 calibration), `docs/superpowers/plans/` (how it was built).
