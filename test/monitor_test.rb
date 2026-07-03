@@ -423,6 +423,44 @@ class LimitsTest < Minitest::Test
   end
 end
 
+class ArchiveYearTest < Minitest::Test
+  def test_column_year
+    Dir.mktmpdir do |dir|
+      a = Dust::Archive.new(dir)
+      a.append('2026-07-03T06:00:00Z' => { 'no2_682' => 10.0 },
+               '2025-07-03T06:00:00Z' => { 'no2_682' => 9.0 })
+      assert_equal({ '2026-07-03T06:00:00Z' => 10.0 }, a.column_year('no2_682', 2026))
+      assert_equal({}, a.column_year('no2_682', 2024))
+      assert_equal({}, a.column_year('pm25_682', 2026))
+    end
+  end
+end
+
+class LimitAlertsTest < Minitest::Test
+  def test_ordinals
+    assert_equal %w[1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st],
+                 [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101].map { |n| Dust::Alerts.ordinal(n) }
+  end
+
+  def test_hourly_limit_title
+    assert_equal 'NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 5th exceedance this year, 3 permitted',
+                 Dust::Alerts.limit_title('no2', :hourly, 235.58, 5, 3)
+  end
+
+  def test_annual_limit_title
+    assert_equal 'PM2.5 year-to-date mean over EU annual limit at Hawcliffe Rd: 12.4 µg/m³ (limit 10)',
+                 Dust::Alerts.limit_title('pm25', :annual, 12.41, nil, nil)
+  end
+
+  def test_limit_body
+    body = Dust::Alerts.limit_body('no2', :hourly, ['2026-07-03T12:00:00Z'], 5, 3)
+    assert_includes body, '03 Jul 13:00'
+    assert_includes body, '5 exceedance hours so far this year (3 permitted)'
+    assert_includes body, '2024/2881'
+    assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

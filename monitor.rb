@@ -209,6 +209,17 @@ module Dust
       end
       [hours, series]
     end
+
+    def column_year(column, year)
+      path = File.join(@dir, "#{year}.csv")
+      return {} unless File.exist?(path)
+      out = {}
+      CSV.read(path, headers: true).each do |r|
+        v = r[column]
+        out[r['hour_utc']] = v.to_f unless v.nil? || v == ''
+      end
+      out
+    end
   end
 
   module Alerts
@@ -239,6 +250,49 @@ module Dust
       end
       lines << ''
       lines << "All values µg/m³, hourly averages. [View the portal](#{PORTAL_URL})"
+      lines.join("\n")
+    end
+
+    PERIOD_LABELS = { hourly: 'hourly', daily: 'daily', annual: 'annual' }.freeze
+
+    def ordinal(n)
+      return "#{n}th" if (11..13).cover?(n % 100)
+      { 1 => "#{n}st", 2 => "#{n}nd", 3 => "#{n}rd" }.fetch(n % 10, "#{n}th")
+    end
+
+    def limit_title(species, period, value, count, allowed)
+      limit = LIMITS[species][period][:limit]
+      if period == :annual
+        format('%s year-to-date mean over EU annual limit at Hawcliffe Rd: %.1f µg/m³ (limit %g)',
+               LABELS[species], value, limit)
+      else
+        format('%s over EU %s limit at Hawcliffe Rd: %.0f µg/m³ (limit %g) — %s exceedance this year, %d permitted',
+               LABELS[species], PERIOD_LABELS[period], value, limit, ordinal(count), allowed)
+      end
+    end
+
+    def limit_body(species, period, items, count, allowed)
+      lines = []
+      case period
+      when :hourly
+        lines << "New exceedance hours at **Hawcliffe Rd., Mountsorrel** " \
+                 "(#{LABELS[species]} > #{LIMITS[species][:hourly][:limit].to_i} µg/m³):"
+        items.each { |h| lines << "- #{london(h)}" }
+        lines << ''
+        lines << "#{count} exceedance hours so far this year (#{allowed} permitted)."
+      when :daily
+        lines << "New exceedance days at **Hawcliffe Rd., Mountsorrel** " \
+                 "(#{LABELS[species]} daily mean > #{LIMITS[species][:daily][:limit].to_i} µg/m³):"
+        items.each { |d| lines << "- #{d}" }
+        lines << ''
+        lines << "#{count} exceedance days so far this year (#{allowed} permitted)."
+      when :annual
+        lines << "The calendar-year-to-date mean #{LABELS[species]} at " \
+                 '**Hawcliffe Rd., Mountsorrel** is above the EU annual limit.'
+      end
+      lines << ''
+      lines << '_Limits are the EU 2030 values (Directive (EU) 2024/2881); they are ' \
+               "stricter than current UK law._ [View the portal](#{PORTAL_URL})"
       lines.join("\n")
     end
 
