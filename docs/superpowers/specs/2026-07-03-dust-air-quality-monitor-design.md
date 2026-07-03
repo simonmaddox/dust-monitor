@@ -93,6 +93,43 @@ the episode), `last_alert` (ISO timestamp).
   never a crash. On a fresh start the evaluation window comes from the archive, so
   state is derived from real recent history rather than cold.
 
+## EU legal limit checks (amendment, 2026-07-03)
+
+In addition to the relative elevation rules, every run checks Hawcliffe's absolute
+levels against the EU limit values of Directive (EU) 2024/2881 Annex I (binding from
+1 Jan 2030; stricter than current UK law — chosen deliberately):
+
+| Species | Period | Limit | Allowed exceedances |
+|---|---|---|---|
+| NO₂ | 1 hour | 200 µg/m³ | 3 / calendar year |
+| NO₂ | 1 day (UTC mean) | 50 µg/m³ | 18 / calendar year |
+| NO₂ | calendar year mean | 20 µg/m³ | — |
+| PM2.5 | 1 day (UTC mean) | 25 µg/m³ | 18 / calendar year |
+| PM2.5 | calendar year mean | 10 µg/m³ | — |
+
+- **Counts are stateless**: year-to-date exceedance tallies are recomputed from the
+  archive on every run; only alert *dedupe* lives in state.
+- **Daily means** count only UTC days with ≥ 18 of 24 hourly values (the directive's
+  75 % data-capture rule). Only completed days are evaluated.
+- **Annual means** are calendar-year-to-date, evaluated only once ≥ 720 hourly values
+  (~30 days) exist for the year.
+- **Dedupe** (`state.json`, new `limits` section): hourly/daily checks store the most
+  recent exceedance already alerted (`last_alerted`); an alert fires only for
+  exceedances newer than that, and one alert covers all new exceedances since, with
+  the year-to-date count vs the allowance in the title (e.g. "5th exceedance this
+  year, 3 permitted"). On first deployment (`last_alerted` null) the baseline is the
+  start of the evaluation window (hourly) / two days ago (daily), so historical
+  exceedances never back-fire. Annual checks alert once per species per calendar year
+  (`alerted_year`).
+- Alert bodies note these are the 2030-applicable EU limits, not current UK law.
+
+## Plausibility filter (amendment, 2026-07-03)
+
+The Hawcliffe PM2.5 sensor malfunctioned for ~432 hours in mid-2025 (readings up to
+2,813 µg/m³). All evaluation — elevation rules, limit checks, means — first drops
+implausible readings: negative values, NO₂ > 1,000 µg/m³, PM2.5 > 500 µg/m³.
+The archive keeps raw values untouched; filtering happens at read/evaluation time.
+
 ## Notifications
 
 A minimal notifier interface: `notify(title, body)`. Implementations:
