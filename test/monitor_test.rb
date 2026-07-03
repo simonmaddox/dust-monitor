@@ -207,6 +207,55 @@ class AlertsTest < Minitest::Test
   end
 end
 
+class ApiClientTest < Minitest::Test
+  def test_with_retry_retries_once_then_raises
+    client = Dust::ApiClient.new(retry_delay: 0)
+    calls = 0
+    result = client.with_retry { calls += 1; raise 'boom' if calls == 1; :ok }
+    assert_equal :ok, result
+    assert_equal 2, calls
+
+    calls = 0
+    assert_raises(RuntimeError) { client.with_retry { calls += 1; raise 'boom' } }
+    assert_equal 2, calls
+  end
+
+  def test_station_filter
+    raw = [{ 'zNumber' => 682, 'type' => 0, 'alias' => 'Hawcliffe Rd., Mountsorrel' },
+           { 'zNumber' => 967, 'type' => 0, 'alias' => nil },
+           { 'zNumber' => 999, 'type' => 100, 'alias' => 'Virtual' }]
+    assert_equal [682], Dust::ApiClient.filter_stations(raw).map { |z| z['zNumber'] }
+  end
+end
+
+class NotifierTest < Minitest::Test
+  FakeResponse = Struct.new(:code, :body)
+
+  def test_github_notifier_posts_issue
+    captured = nil
+    transport = lambda do |uri, headers, body|
+      captured = [uri.to_s, headers['Authorization'], JSON.parse(body)]
+      FakeResponse.new('201', '{}')
+    end
+    n = Dust::GitHubIssueNotifier.new(token: 'tok', repo: 'simon/dust', transport: transport)
+    n.notify('the title', 'the body')
+    assert_equal ['https://api.github.com/repos/simon/dust/issues', 'Bearer tok',
+                  { 'title' => 'the title', 'body' => 'the body' }], captured
+  end
+
+  def test_github_notifier_raises_on_failure
+    n = Dust::GitHubIssueNotifier.new(token: 'tok', repo: 'simon/dust',
+                                      transport: ->(*) { FakeResponse.new('403', 'nope') })
+    assert_raises(RuntimeError) { n.notify('t', 'b') }
+  end
+
+  def test_console_notifier_prints
+    out, = capture_io { Dust::ConsoleNotifier.new.notify('t', 'b') }
+    assert_includes out, 'ALERT: t'
+    assert_includes out, 'b'
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

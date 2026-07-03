@@ -215,4 +215,88 @@ module Dust
       (d - d.wday).day
     end
   end
+
+  class ApiClient
+    def initialize(retry_delay: 5)
+      @retry_delay = retry_delay
+    end
+
+    def self.filter_stations(raw)
+      raw.select { |z| z['type'] == 0 && z['alias'] }
+    end
+
+    def token
+      @token ||= begin
+        auth = ["#{SLUG}:#{SLUG}"].pack('m0')
+        get_json("#{BASE}/auth/api/authuser?auth=#{auth}").fetch('token')
+      end
+    end
+
+    def stations
+      self.class.filter_stations(get_json("#{BASE}/zephyr/api/v2/getzephyrs", bearer: token))
+    end
+
+    def measurements(z_number, from_time, to_time)
+      from = from_time.utc.strftime('%Y%m%d%H%M')
+      to = to_time.utc.strftime('%Y%m%d%H%M')
+      get_json("#{BASE}/zephyr/api/v2/measurementdata/#{z_number}/#{from}/#{to}" \
+               '/AB/1/MyAirLocation/production', bearer: token)
+    end
+
+    def get_json(url, bearer: nil)
+      with_retry do
+        uri = URI(url)
+        req = Net::HTTP::Get.new(uri)
+        req['Authorization'] = "Bearer #{bearer}" if bearer
+        res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 180) do |http|
+          http.request(req)
+        end
+        raise "HTTP #{res.code} for #{url}" unless res.code == '200'
+        JSON.parse(res.body)
+      end
+    end
+
+    def with_retry
+      attempts = 0
+      begin
+        yield
+      rescue StandardError
+        attempts += 1
+        raise if attempts > 1
+        sleep @retry_delay
+        retry
+      end
+    end
+  end
+
+  class ConsoleNotifier
+    def notify(title, body)
+      puts "ALERT: #{title}\n#{body}"
+    end
+  end
+
+  class GitHubIssueNotifier
+    def initialize(token: ENV['GITHUB_TOKEN'], repo: ENV['GITHUB_REPOSITORY'], transport: nil)
+      @token = token
+      @repo = repo
+      @transport = transport || method(:post)
+    end
+
+    def notify(title, body)
+      uri = URI("https://api.github.com/repos/#{@repo}/issues")
+      headers = { 'Authorization' => "Bearer #{@token}",
+                  'Accept' => 'application/vnd.github+json',
+                  'Content-Type' => 'application/json' }
+      res = @transport.call(uri, headers, JSON.generate(title: title, body: body))
+      raise "GitHub issue creation failed: HTTP #{res.code} #{res.body.to_s[0, 200]}" unless res.code == '201'
+    end
+
+    private
+
+    def post(uri, headers, body)
+      req = Net::HTTP::Post.new(uri, headers)
+      req.body = body
+      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+    end
+  end
 end
