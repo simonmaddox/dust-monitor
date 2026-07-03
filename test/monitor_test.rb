@@ -386,6 +386,43 @@ class MonitorTest < Minitest::Test
   end
 end
 
+class LimitsTest < Minitest::Test
+  def h(day, hour)
+    format('2026-07-%02dT%02d:00:00Z', day, hour)
+  end
+
+  def test_plausible_drops_garbage
+    s = { h(1, 0) => 5.0, h(1, 1) => -1.0, h(1, 2) => 2600.0 }
+    assert_equal({ h(1, 0) => 5.0 }, Dust::Limits.plausible(s, 'pm25'))
+    assert_equal({ h(1, 0) => 5.0 }, Dust::Limits.plausible(s, 'no2')) # 2600 > 1000 dropped too
+    assert_equal({ h(1, 0) => 600.0 }, Dust::Limits.plausible({ h(1, 0) => 600.0 }, 'no2')) # <1000 kept
+  end
+
+  def test_exceedance_hours
+    s = { h(1, 8) => 210.0, h(1, 9) => 199.9, h(2, 8) => 250.0 }
+    assert_equal [h(1, 8), h(2, 8)], Dust::Limits.exceedance_hours(s, 200.0)
+  end
+
+  def test_daily_means_require_coverage
+    full = (0..23).to_h { |i| [h(1, i), 60.0] }          # complete day, mean 60
+    sparse = (0..10).to_h { |i| [h(2, i), 60.0] }        # only 11 hours
+    means = Dust::Limits.daily_means(full.merge(sparse))
+    assert_equal({ '2026-07-01' => 60.0 }, means)
+    assert_equal ['2026-07-01'], Dust::Limits.exceedance_days(means, 50.0)
+    assert_equal [], Dust::Limits.exceedance_days(means, 60.0) # not strictly greater
+  end
+
+  def test_annual_mean_gate
+    few = (0..100).to_h { |i| [h(1 + i / 24, i % 24), 30.0] }
+    mean, _count = Dust::Limits.annual_mean(few)
+    assert_nil mean
+    many = (0..999).to_h { |i| [format('2026-%02d-%02dT%02d:00:00Z', 1 + i / 480, 1 + (i / 24) % 20, i % 24), 30.0] }
+    mean, count = Dust::Limits.annual_mean(many)
+    assert_in_delta 30.0, mean
+    assert_operator count, :>=, 720
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

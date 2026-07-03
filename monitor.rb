@@ -19,6 +19,17 @@ module Dust
     'no2'  => { ratio: 2.5, diff: 30.0 },
     'pm25' => { ratio: 1.5, diff: 5.0 }
   }.freeze
+  # EU Directive 2024/2881 Annex I limit values (apply from 1 Jan 2030)
+  LIMITS = {
+    'no2'  => { hourly: { limit: 200.0, allowed: 3 },
+                daily:  { limit: 50.0,  allowed: 18 },
+                annual: { limit: 20.0 } },
+    'pm25' => { daily:  { limit: 25.0,  allowed: 18 },
+                annual: { limit: 10.0 } }
+  }.freeze
+  PLAUSIBLE_MAX = { 'no2' => 1000.0, 'pm25' => 500.0 }.freeze
+  DAILY_MIN_HOURS = 18 # 75% data capture, per the directive
+  ANNUAL_MIN_HOURS = 720
   PERSIST_HOURS = 2
   QUIET_HOURS = 6
   MIN_COMPARATORS = 2
@@ -63,6 +74,38 @@ module Dust
         mean = vals.sum / vals.size
         set << hour if tv >= ratio * mean && tv - mean >= diff
       end
+    end
+  end
+
+  module Limits
+    module_function
+
+    def plausible(series, species)
+      max = PLAUSIBLE_MAX.fetch(species)
+      series.select { |_h, v| v >= 0 && v <= max }
+    end
+
+    def exceedance_hours(series, limit)
+      series.select { |_h, v| v > limit }.keys.sort
+    end
+
+    def daily_means(series)
+      out = {}
+      series.group_by { |hour, _v| hour[0, 10] }.each do |day, pairs|
+        next if pairs.size < DAILY_MIN_HOURS
+        out[day] = pairs.map { |_h, v| v }.sum / pairs.size
+      end
+      out
+    end
+
+    def exceedance_days(daily_means, limit)
+      daily_means.select { |_d, m| m > limit }.keys.sort
+    end
+
+    def annual_mean(series)
+      vals = series.values
+      return [nil, vals.size] if vals.size < ANNUAL_MIN_HOURS
+      [vals.sum / vals.size, vals.size]
     end
   end
 
