@@ -173,6 +173,40 @@ class ArchiveTest < Minitest::Test
   end
 end
 
+class AlertsTest < Minitest::Test
+  def test_title_format
+    assert_equal 'NO₂ elevated at Hawcliffe Rd: 142 µg/m³ vs 45 across other stations (3.2×)',
+                 Dust::Alerts.title('no2', 142.3, 44.9)
+  end
+
+  def test_bst_boundaries
+    assert Dust::Alerts.bst?(Time.utc(2026, 7, 3, 12))        # midsummer
+    refute Dust::Alerts.bst?(Time.utc(2026, 1, 15, 12))       # winter
+    refute Dust::Alerts.bst?(Time.utc(2026, 3, 29, 0, 30))    # before 01:00 UTC last Sun of March
+    assert Dust::Alerts.bst?(Time.utc(2026, 3, 29, 1, 30))    # after switch
+    assert Dust::Alerts.bst?(Time.utc(2026, 10, 25, 0, 30))   # before 01:00 UTC last Sun of Oct
+    refute Dust::Alerts.bst?(Time.utc(2026, 10, 25, 1, 30))   # after switch back
+  end
+
+  def test_london_rendering
+    assert_equal '03 Jul 13:00', Dust::Alerts.london('2026-07-03T12:00:00Z')
+    assert_equal '15 Jan 12:00', Dust::Alerts.london('2026-01-15T12:00:00Z')
+  end
+
+  def test_body_contains_table_and_link
+    hours = ['2026-07-03T11:00:00Z', '2026-07-03T12:00:00Z']
+    series = { 'no2_682' => { hours[0] => 100.0, hours[1] => 120.5 },
+               'no2_856' => { hours[1] => 20.0 } }
+    body = Dust::Alerts.body('no2', hours[0], hours, series,
+                             { 682 => 'Hawcliffe Rd., Mountsorrel', 856 => 'Ashby Rd., Loughborough' }, 682)
+    assert_includes body, '| Hour (London) | Hawcliffe Rd., Mountsorrel | Ashby Rd., Loughborough |'
+    assert_includes body, '| 03 Jul 13:00 | 120.5 | 20.0 |'
+    assert_includes body, '| 03 Jul 12:00 | 100.0 | – |'
+    assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
+    assert_includes body, 'since 03 Jul 12:00'
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

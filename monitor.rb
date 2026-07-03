@@ -167,4 +167,52 @@ module Dust
       [hours, series]
     end
   end
+
+  module Alerts
+    LABELS = { 'no2' => 'NO₂', 'pm25' => 'PM2.5' }.freeze
+    module_function
+
+    def title(species, value, others_mean)
+      ratio = others_mean.positive? ? value / others_mean : Float::INFINITY
+      format('%s elevated at Hawcliffe Rd: %.0f µg/m³ vs %.0f across other stations (%.1f×)',
+             LABELS[species], value, others_mean, ratio)
+    end
+
+    def body(species, run_start, hours, series, stations, target_id)
+      rule = RULES[species]
+      lines = []
+      lines << format('**%s** at **%s** has been ≥%.1f× the average of the other stations ' \
+                      '(and ≥%.0f µg/m³ above it) since %s.',
+                      LABELS[species], stations[target_id], rule[:ratio], rule[:diff], london(run_start))
+      lines << ''
+      lines << "| Hour (London) | #{stations.values.join(' | ')} |"
+      lines << "|#{'---|' * (stations.size + 1)}"
+      hours.last(6).each do |h|
+        cells = stations.keys.map do |id|
+          v = (series["#{species}_#{id}"] || {})[h]
+          v ? v.round(1) : '–'
+        end
+        lines << "| #{london(h)} | #{cells.join(' | ')} |"
+      end
+      lines << ''
+      lines << "All values µg/m³, hourly averages. [View the portal](#{PORTAL_URL})"
+      lines.join("\n")
+    end
+
+    def london(hour)
+      t = Time.parse(hour)
+      t.getlocal(bst?(t) ? '+01:00' : '+00:00').strftime('%d %b %H:%M')
+    end
+
+    # BST: 01:00 UTC last Sunday of March -> 01:00 UTC last Sunday of October
+    def bst?(t)
+      t >= Time.utc(t.year, 3, last_sunday(t.year, 3), 1) &&
+        t < Time.utc(t.year, 10, last_sunday(t.year, 10), 1)
+    end
+
+    def last_sunday(year, month)
+      d = Date.new(year, month, -1)
+      (d - d.wday).day
+    end
+  end
 end
