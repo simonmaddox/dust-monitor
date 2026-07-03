@@ -299,4 +299,128 @@ module Dust
       Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     end
   end
+
+  class Monitor
+    def initialize(client: ApiClient.new, archive: Archive.new, notifiers: nil,
+                   dry_run: false, now: Time.now.utc, root: ROOT)
+      @client = client
+      @archive = archive
+      @dry_run = dry_run
+      @now = now
+      @root = root
+      @notifiers = notifiers ||
+                   (dry_run ? [ConsoleNotifier.new] : [ConsoleNotifier.new, GitHubIssueNotifier.new])
+    end
+
+    def run
+      stations = @client.stations
+      target = stations.find { |z| z['alias'] =~ TARGET_ALIAS }
+      raise 'No Hawcliffe station found in portal station list' unless target
+      unless @dry_run
+        write_json('stations.json', stations.to_h { |z| [z['zNumber'].to_s, z['alias']] })
+      end
+
+      each_month_chunk(fetch_start, @now) do |c_from, c_to|
+        stations.each { |z| @archive.append(rows_for(z, c_from, c_to)) }
+      end
+      evaluate(target, stations - [target])
+    end
+
+    def backfill
+      stations = @client.stations
+      earliest = stations.map { |z| Time.parse("#{z['locationStartTimeDate']} UTC") }.min
+      each_month_chunk(Time.utc(earliest.year, earliest.month, 1), @now) do |c_from, c_to|
+        stations.each { |z| @archive.append(rows_for(z, c_from, c_to)) }
+        puts "backfilled #{c_from.strftime('%Y-%m')}"
+      end
+    end
+
+    private
+
+    def fetch_start
+      lookback = @now - LOOKBACK_HOURS * 3600
+      last = @archive.last_hour
+      last ? [Time.parse(last) + 3600, lookback].min : lookback
+    end
+
+    def each_month_chunk(from, to)
+      while from < to
+        month_end = Time.utc(from.year + (from.month == 12 ? 1 : 0), from.month % 12 + 1, 1)
+        c_to = [month_end, to].min
+        yield from, c_to
+        from = c_to
+      end
+    end
+
+    def rows_for(station, from, to)
+      series = Parser.hourly_series(@client.measurements(station['zNumber'], from, to))
+      cutoff = @now.strftime('%Y-%m-%dT%H:00:00Z')
+      rows = Hash.new { |h, k| h[k] = {} }
+      series.each do |sp, by_hour|
+        by_hour.each do |hour, val|
+          rows[hour]["#{SPECIES[sp]}_#{station['zNumber']}"] = val if hour < cutoff
+        end
+      end
+      rows
+    end
+
+    def evaluate(target, others)
+      end_hour = (@now - 3600).strftime('%Y-%m-%dT%H:00:00Z')
+      hours, series = @archive.window(LOOKBACK_HOURS, end_hour)
+      state = load_state
+      station_map = ([target] + others).to_h { |z| [z['zNumber'], z['alias']] }
+      alerts = []
+
+      RULES.each do |species, rule|
+        tseries = series["#{species}_#{target['zNumber']}"]
+        oseries = others.map { |z| series["#{species}_#{z['zNumber']}"] }
+        qualifying = Rules.qualifying_hours(tseries, oseries,
+                                            ratio: rule[:ratio], diff: rule[:diff])
+        new_state, run_start = Episodes.step(state[species], hours, qualifying, now: @now)
+        if run_start
+          # headline the episode's peak hour, not merely the latest
+          peak = hours.select { |h| qualifying.include?(h) }.max_by { |h| tseries[h] }
+          vals = oseries.map { |o| o[peak] }.compact
+          mean = vals.sum / vals.size
+          alerts << [Alerts.title(species, tseries[peak], mean),
+                     Alerts.body(species, run_start, hours, series, station_map, target['zNumber'])]
+        end
+        state[species] = new_state
+        puts "#{species}: #{qualifying.size}/#{hours.size} qualifying hours, " \
+             "active=#{new_state['active']}#{run_start ? ", ALERT (since #{run_start})" : ''}"
+      end
+
+      if @dry_run
+        puts "dry-run: state not written: #{JSON.generate(state)}"
+        alerts.each { |t, b| puts "dry-run alert: #{t}\n#{b}" }
+      else
+        alerts.each { |t, b| @notifiers.each { |n| n.notify(t, b) } }
+        write_json('state.json', state)
+      end
+    end
+
+    def load_state
+      path = File.join(@root, 'state.json')
+      raw = File.exist?(path) ? JSON.parse(File.read(path)) : {}
+      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.merge(raw[sp] || {})] }
+    rescue JSON::ParserError
+      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.dup] }
+    end
+
+    def write_json(name, obj)
+      File.write(File.join(@root, name), JSON.pretty_generate(obj) + "\n")
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  mode = (ARGV - ['--dry-run']).first || 'run'
+  case mode
+  when 'run'
+    Dust::Monitor.new(dry_run: ARGV.include?('--dry-run')).run
+  when 'backfill'
+    Dust::Monitor.new.backfill
+  else
+    abort 'usage: ruby monitor.rb [run [--dry-run] | backfill]'
+  end
 end

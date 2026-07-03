@@ -256,6 +256,121 @@ class NotifierTest < Minitest::Test
   end
 end
 
+class FakeClient
+  attr_reader :calls
+  def initialize(stations, series_by_station)
+    @stations = stations
+    @series = series_by_station
+    @calls = []
+  end
+
+  def stations
+    @stations
+  end
+
+  def measurements(z, from, to)
+    @calls << [z, from, to]
+    slot_vals = @series.fetch(z, {})
+    { 'data' => { 'Hourly average on the hour' => { 'slotB' => {
+      'dateTime' => { 'data' => slot_vals.keys },
+      'NO2' => { 'data' => slot_vals.values.map { |v| v[0] } },
+      'particulatePM25' => { 'data' => slot_vals.values.map { |v| v[1] } }
+    } } } }
+  end
+end
+
+class Collector
+  attr_reader :alerts
+  def initialize
+    @alerts = []
+  end
+
+  def notify(title, body)
+    @alerts << [title, body]
+  end
+end
+
+class MonitorTest < Minitest::Test
+  NOW = Time.utc(2026, 6, 23, 21, 15)
+  STATIONS = [
+    { 'zNumber' => 682, 'alias' => 'Hawcliffe Rd., Mountsorrel', 'locationStartTimeDate' => '2022-06-28 15:12:29' },
+    { 'zNumber' => 856, 'alias' => 'Ashby Rd., Loughborough',    'locationStartTimeDate' => '2022-06-28 15:12:29' },
+    { 'zNumber' => 616, 'alias' => 'Whetstone Way, Whetstone',   'locationStartTimeDate' => '2022-06-28 15:12:29' }
+  ].freeze
+
+  # Replay of the real 23 June 2026 spike: Hawcliffe ramps to 210/235 µg/m³
+  # while the others sit near 70 — must produce exactly one NO2 alert.
+  def spike_series
+    hours = (10..20).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
+    haw   = [20, 25, 30, 28, 26, 30, 35, 60, 210.5, 235.6, 180]
+    other = [22, 24, 28, 27, 25, 28, 30, 45, 68.8, 77.4, 70]
+    { 682 => hours.zip(haw).to_h { |(t, v)| [t, [v.to_f, 3.0]] },
+      856 => hours.zip(other).to_h { |(t, v)| [t, [v.to_f, 3.1]] },
+      616 => hours.zip(other).to_h { |(t, v)| [t, [v.to_f, 2.9]] } }
+  end
+
+  def run_monitor(dir, collector)
+    monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, spike_series),
+                                archive: Dust::Archive.new(File.join(dir, 'history')),
+                                notifiers: [collector], now: NOW, root: dir)
+    capture_io { monitor.run }
+    monitor
+  end
+
+  def test_spike_alerts_once_and_persists_state
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      run_monitor(dir, collector)
+      assert_equal 1, collector.alerts.size
+      title, body = collector.alerts.first
+      assert_match(/NO₂ elevated at Hawcliffe Rd: 236 µg\/m³ vs 77/, title)
+      assert_includes body, 'Hawcliffe Rd., Mountsorrel'
+      state = JSON.parse(File.read(File.join(dir, 'state.json')))
+      assert state['no2']['active']
+      refute state['pm25']['active']
+      stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      assert_equal 'Hawcliffe Rd., Mountsorrel', stations['682']
+      # second run over same data: no duplicate alert
+      run_monitor(dir, collector)
+      assert_equal 1, collector.alerts.size
+    end
+  end
+
+  def test_dry_run_writes_nothing
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, spike_series),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [collector], dry_run: true, now: NOW, root: dir)
+      capture_io { monitor.run }
+      assert_empty collector.alerts
+      refute File.exist?(File.join(dir, 'state.json'))
+      refute File.exist?(File.join(dir, 'stations.json'))
+    end
+  end
+
+  def test_backfill_walks_months_from_install_date
+    Dir.mktmpdir do |dir|
+      client = FakeClient.new(STATIONS, spike_series)
+      monitor = Dust::Monitor.new(client: client, archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [], now: Time.utc(2022, 8, 15), root: dir)
+      capture_io { monitor.backfill }
+      # 2022-06, 2022-07, 2022-08 for each of 3 stations
+      assert_equal 9, client.calls.size
+      assert_equal Time.utc(2022, 6, 1), client.calls.first[1]
+    end
+  end
+
+  def test_run_fails_without_hawcliffe
+    Dir.mktmpdir do |dir|
+      monitor = Dust::Monitor.new(client: FakeClient.new([STATIONS[1]], {}),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [], now: NOW, root: dir)
+      assert_raises(RuntimeError) { capture_io { monitor.run } }
+    end
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])
