@@ -110,4 +110,61 @@ module Dust
       run && run[:start]
     end
   end
+
+  class Archive
+    def initialize(dir = File.join(ROOT, 'history'))
+      @dir = dir
+    end
+
+    def append(rows)
+      rows.group_by { |hour, _| hour[0, 4] }.each do |year, group|
+        path = File.join(@dir, "#{year}.csv")
+        cols = ['hour_utc']
+        data = {}
+        if File.exist?(path)
+          table = CSV.read(path, headers: true)
+          cols = table.headers
+          table.each { |r| data[r['hour_utc']] = r.to_h }
+        end
+        group.each do |hour, values|
+          row = data[hour] || { 'hour_utc' => hour }
+          values.each do |col, val|
+            cols << col unless cols.include?(col)
+            row[col] = val
+          end
+          data[hour] = row
+        end
+        FileUtils.mkdir_p(@dir)
+        CSV.open(path, 'w') do |csv|
+          csv << cols
+          data.keys.sort.each { |h| csv << cols.map { |c| data[h][c] } }
+        end
+      end
+    end
+
+    def last_hour
+      files = Dir[File.join(@dir, '*.csv')].sort
+      return nil if files.empty?
+      CSV.read(files.last, headers: true).map { |r| r['hour_utc'] }.compact.max
+    end
+
+    def window(hours_back, end_hour)
+      end_t = Time.parse(end_hour)
+      wanted = (0...hours_back).map { |i| (end_t - i * 3600).strftime('%Y-%m-%dT%H:00:00Z') }.reverse
+      rows = {}
+      wanted.map { |h| h[0, 4] }.uniq.each do |year|
+        path = File.join(@dir, "#{year}.csv")
+        next unless File.exist?(path)
+        CSV.read(path, headers: true).each { |r| rows[r['hour_utc']] = r.to_h }
+      end
+      hours = wanted.select { |h| rows.key?(h) }
+      series = Hash.new { |h, k| h[k] = {} }
+      hours.each do |h|
+        rows[h].each do |col, val|
+          series[col][h] = val.to_f unless col == 'hour_utc' || val.nil? || val == ''
+        end
+      end
+      [hours, series]
+    end
+  end
 end

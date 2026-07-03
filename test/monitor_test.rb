@@ -131,6 +131,48 @@ class EpisodesTest < Minitest::Test
   end
 end
 
+class ArchiveTest < Minitest::Test
+  def test_append_window_last_hour_roundtrip
+    Dir.mktmpdir do |dir|
+      a = Dust::Archive.new(dir)
+      a.append('2026-07-03T06:00:00Z' => { 'no2_682' => 10.0, 'no2_856' => 5.0 })
+      a.append('2026-07-03T07:00:00Z' => { 'no2_682' => 20.0, 'pm25_682' => 3.0 }) # new column
+      a.append('2026-07-03T06:00:00Z' => { 'no2_682' => 11.0 }) # idempotent overwrite
+
+      assert_equal '2026-07-03T07:00:00Z', a.last_hour
+      hours, series = a.window(12, '2026-07-03T07:00:00Z')
+      assert_equal ['2026-07-03T06:00:00Z', '2026-07-03T07:00:00Z'], hours
+      assert_equal 11.0, series['no2_682']['2026-07-03T06:00:00Z']
+      assert_equal 20.0, series['no2_682']['2026-07-03T07:00:00Z']
+      assert_equal 5.0,  series['no2_856']['2026-07-03T06:00:00Z']
+      assert_nil series['no2_856']['2026-07-03T07:00:00Z']
+      assert_equal ['2026.csv'], Dir.children(dir).sort
+    end
+  end
+
+  def test_window_spans_year_boundary
+    Dir.mktmpdir do |dir|
+      a = Dust::Archive.new(dir)
+      a.append('2025-12-31T23:00:00Z' => { 'no2_682' => 1.0 },
+               '2026-01-01T00:00:00Z' => { 'no2_682' => 2.0 })
+      assert_equal ['2025.csv', '2026.csv'], Dir.children(dir).sort
+      hours, series = a.window(4, '2026-01-01T00:00:00Z')
+      assert_equal ['2025-12-31T23:00:00Z', '2026-01-01T00:00:00Z'], hours
+      assert_equal 1.0, series['no2_682']['2025-12-31T23:00:00Z']
+    end
+  end
+
+  def test_empty_archive
+    Dir.mktmpdir do |dir|
+      a = Dust::Archive.new(dir)
+      assert_nil a.last_hour
+      hours, series = a.window(6, '2026-07-03T07:00:00Z')
+      assert_empty hours
+      assert_empty series.to_h
+    end
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])
