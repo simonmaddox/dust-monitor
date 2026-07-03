@@ -67,6 +67,70 @@ class RulesTest < Minitest::Test
   end
 end
 
+class EpisodesTest < Minitest::Test
+  def hours(n, from: Time.utc(2026, 7, 3, 0))
+    (0...n).map { |i| (from + i * 3600).strftime('%Y-%m-%dT%H:00:00Z') }
+  end
+  NOW = Time.utc(2026, 7, 3, 12, 15)
+
+  def test_alerts_on_two_consecutive_qualifying_hours
+    w = hours(12)
+    state, start = Dust::Episodes.step(nil, w, Set.new(w.last(2)), now: NOW)
+    assert_equal w[10], start
+    assert state['active']
+    assert_equal w[10], state['since']
+  end
+
+  def test_single_hour_spike_no_alert
+    w = hours(12)
+    state, start = Dust::Episodes.step(nil, w, Set[w[11]], now: NOW)
+    assert_nil start
+    refute state['active']
+  end
+
+  def test_no_realert_while_active
+    w = hours(12)
+    active = { 'active' => true, 'since' => w[8], 'last_alert' => '2026-07-03T09:15:00Z' }
+    state, start = Dust::Episodes.step(active, w, Set.new(w.last(4)), now: NOW)
+    assert_nil start
+    assert state['active']
+  end
+
+  def test_episode_ends_after_six_quiet_hours_and_rearms
+    w = hours(12)
+    active = { 'active' => true, 'since' => w[0], 'last_alert' => '2026-07-03T01:15:00Z' }
+    state, start = Dust::Episodes.step(active, w, Set.new(w.first(3)), now: NOW)
+    assert_nil start
+    refute state['active']
+    # a NEW run later re-alerts
+    state2, start2 = Dust::Episodes.step(state, w, Set.new(w.first(3)) + Set.new(w.last(2)), now: NOW)
+    assert_equal w[10], start2
+    assert state2['active']
+  end
+
+  def test_stale_run_does_not_alert
+    w = hours(12)
+    _, start = Dust::Episodes.step(nil, w, Set[w[0], w[1]], now: NOW) # ended >6h ago
+    assert_nil start
+  end
+
+  def test_reprocessing_same_run_does_not_realert
+    w = hours(12)
+    state, start = Dust::Episodes.step(nil, w, Set[w[9], w[10]], now: NOW)
+    assert_equal w[9], start
+    # same window again after the episode ends: same old run must not re-trigger
+    ended = state.merge('active' => false)
+    _, again = Dust::Episodes.step(ended, w, Set[w[9], w[10]], now: NOW)
+    assert_nil again
+  end
+
+  def test_non_adjacent_hours_are_not_consecutive
+    w = hours(12)
+    _, start = Dust::Episodes.step(nil, w, Set[w[9], w[11]], now: NOW)
+    assert_nil start
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

@@ -65,4 +65,49 @@ module Dust
       end
     end
   end
+
+  module Episodes
+    EMPTY = { 'active' => false, 'since' => nil, 'last_alert' => nil }.freeze
+    module_function
+
+    def step(state, hours, qualifying, now: Time.now.utc)
+      state = EMPTY.merge(state || {})
+      recent = hours.last(QUIET_HOURS)
+      if state['active'] && recent.any? && recent.none? { |h| qualifying.include?(h) }
+        state = state.merge('active' => false)
+      end
+      return [state, nil] if state['active']
+
+      run_start = live_run_start(hours, qualifying)
+      if run_start && (state['since'].nil? || run_start > state['since'])
+        [state.merge('active' => true, 'since' => run_start,
+                     'last_alert' => now.strftime('%Y-%m-%dT%H:%M:%SZ')), run_start]
+      else
+        [state, nil]
+      end
+    end
+
+    # Start of the newest qualifying run of >= PERSIST_HOURS adjacent hours
+    # whose last hour falls in the final QUIET_HOURS of the window.
+    def live_run_start(hours, qualifying)
+      live = hours.last(QUIET_HOURS)
+      runs = []
+      current = nil
+      hours.each do |h|
+        unless qualifying.include?(h)
+          current = nil
+          next
+        end
+        if current && Time.parse(h) - Time.parse(current[:last]) == 3600
+          current[:last] = h
+          current[:len] += 1
+        else
+          current = { start: h, last: h, len: 1 }
+          runs << current
+        end
+      end
+      run = runs.select { |r| r[:len] >= PERSIST_HOURS && live.include?(r[:last]) }.last
+      run && run[:start]
+    end
+  end
 end
