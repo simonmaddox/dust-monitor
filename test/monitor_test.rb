@@ -67,70 +67,6 @@ class RulesTest < Minitest::Test
   end
 end
 
-class EpisodesTest < Minitest::Test
-  def hours(n, from: Time.utc(2026, 7, 3, 0))
-    (0...n).map { |i| (from + i * 3600).strftime('%Y-%m-%dT%H:00:00Z') }
-  end
-  NOW = Time.utc(2026, 7, 3, 12, 15)
-
-  def test_alerts_on_two_consecutive_qualifying_hours
-    w = hours(12)
-    state, start = Dust::Episodes.step(nil, w, Set.new(w.last(2)), now: NOW)
-    assert_equal w[10], start
-    assert state['active']
-    assert_equal w[10], state['since']
-  end
-
-  def test_single_hour_spike_no_alert
-    w = hours(12)
-    state, start = Dust::Episodes.step(nil, w, Set[w[11]], now: NOW)
-    assert_nil start
-    refute state['active']
-  end
-
-  def test_no_realert_while_active
-    w = hours(12)
-    active = { 'active' => true, 'since' => w[8], 'last_alert' => '2026-07-03T09:15:00Z' }
-    state, start = Dust::Episodes.step(active, w, Set.new(w.last(4)), now: NOW)
-    assert_nil start
-    assert state['active']
-  end
-
-  def test_episode_ends_after_six_quiet_hours_and_rearms
-    w = hours(12)
-    active = { 'active' => true, 'since' => w[0], 'last_alert' => '2026-07-03T01:15:00Z' }
-    state, start = Dust::Episodes.step(active, w, Set.new(w.first(3)), now: NOW)
-    assert_nil start
-    refute state['active']
-    # a NEW run later re-alerts
-    state2, start2 = Dust::Episodes.step(state, w, Set.new(w.first(3)) + Set.new(w.last(2)), now: NOW)
-    assert_equal w[10], start2
-    assert state2['active']
-  end
-
-  def test_stale_run_does_not_alert
-    w = hours(12)
-    _, start = Dust::Episodes.step(nil, w, Set[w[0], w[1]], now: NOW) # ended >6h ago
-    assert_nil start
-  end
-
-  def test_reprocessing_same_run_does_not_realert
-    w = hours(12)
-    state, start = Dust::Episodes.step(nil, w, Set[w[9], w[10]], now: NOW)
-    assert_equal w[9], start
-    # same window again after the episode ends: same old run must not re-trigger
-    ended = state.merge('active' => false)
-    _, again = Dust::Episodes.step(ended, w, Set[w[9], w[10]], now: NOW)
-    assert_nil again
-  end
-
-  def test_non_adjacent_hours_are_not_consecutive
-    w = hours(12)
-    _, start = Dust::Episodes.step(nil, w, Set[w[9], w[11]], now: NOW)
-    assert_nil start
-  end
-end
-
 class ArchiveTest < Minitest::Test
   def test_append_window_last_hour_roundtrip
     Dir.mktmpdir do |dir|
@@ -174,11 +110,6 @@ class ArchiveTest < Minitest::Test
 end
 
 class AlertsTest < Minitest::Test
-  def test_title_format
-    assert_equal 'NO₂ elevated at Hawcliffe Rd: 142 µg/m³ vs 45 across other stations (3.2×)',
-                 Dust::Alerts.title('no2', 142.3, 44.9)
-  end
-
   def test_bst_boundaries
     assert Dust::Alerts.bst?(Time.utc(2026, 7, 3, 12))        # midsummer
     refute Dust::Alerts.bst?(Time.utc(2026, 1, 15, 12))       # winter
@@ -193,18 +124,6 @@ class AlertsTest < Minitest::Test
     assert_equal '15 Jan 12:00', Dust::Alerts.london('2026-01-15T12:00:00Z')
   end
 
-  def test_body_contains_table_and_link
-    hours = ['2026-07-03T11:00:00Z', '2026-07-03T12:00:00Z']
-    series = { 'no2_682' => { hours[0] => 100.0, hours[1] => 120.5 },
-               'no2_856' => { hours[1] => 20.0 } }
-    body = Dust::Alerts.body('no2', hours[0], hours, series,
-                             { 682 => 'Hawcliffe Rd., Mountsorrel', 856 => 'Ashby Rd., Loughborough' }, 682)
-    assert_includes body, '| Hour (London) | Hawcliffe Rd., Mountsorrel | Ashby Rd., Loughborough |'
-    assert_includes body, '| 03 Jul 13:00 | 120.5 | 20.0 |'
-    assert_includes body, '| 03 Jul 12:00 | 100.0 | – |'
-    assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
-    assert_includes body, 'since 03 Jul 12:00'
-  end
 end
 
 class ApiClientTest < Minitest::Test
@@ -291,7 +210,7 @@ class Collector
 end
 
 class MonitorTest < Minitest::Test
-  NOW = Time.utc(2026, 6, 23, 21, 15)
+  NOW = Time.utc(2026, 6, 24, 6, 15) # digest morning, covering 23 June
   STATIONS = [
     { 'zNumber' => 682, 'alias' => 'Hawcliffe Rd., Mountsorrel', 'locationStartTimeDate' => '2022-06-28 15:12:29' },
     { 'zNumber' => 856, 'alias' => 'Ashby Rd., Loughborough',    'locationStartTimeDate' => '2022-06-28 15:12:29' },
@@ -317,50 +236,73 @@ class MonitorTest < Minitest::Test
     monitor
   end
 
-  def test_spike_alerts_once_and_persists_state
+  def test_spike_day_produces_single_digest
     Dir.mktmpdir do |dir|
       collector = Collector.new
       run_monitor(dir, collector)
-      # the spike triggers both the elevation alert and the EU hourly limit alert
-      assert_equal 2, collector.alerts.size
-      title, body = collector.alerts.find { |t, _| t.include?('elevated') }
-      assert_match(/NO₂ elevated at Hawcliffe Rd: 236 µg\/m³ vs 77/, title)
+      assert_equal 1, collector.alerts.size
+      title, body = collector.alerts.first
+      assert_equal 'Air quality digest — Hawcliffe Rd, Tue 23 Jun 2026', title
+      assert_includes body, '## Elevated vs other stations'
+      assert_includes body, 'peak **235.6 µg/m³** vs 77.4'
+      assert_includes body, '## Over EU legal limits'
+      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 18 permitted/, body)
+      assert_includes body, '## Data problems' # fixture day has only 11/24 hours
+      assert_includes body, '## Daily means (µg/m³)'
       assert_includes body, 'Hawcliffe Rd., Mountsorrel'
-      state = JSON.parse(File.read(File.join(dir, 'state.json')))
-      assert state['no2']['active']
-      refute state['pm25']['active']
-      stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
-      assert_equal 'Hawcliffe Rd., Mountsorrel', stations['682']
-      # second run over same data: no duplicate alerts of either kind
-      run_monitor(dir, collector)
-      assert_equal 2, collector.alerts.size
-    end
-  end
 
-  def test_limit_alert_fires_for_over_200_hours
-    Dir.mktmpdir do |dir|
-      collector = Collector.new
-      run_monitor(dir, collector)
-      limit_alerts = collector.alerts.select { |t, _| t.include?('over EU hourly limit') }
-      assert_equal 1, limit_alerts.size
-      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 18 permitted/, limit_alerts.first[0])
       state = JSON.parse(File.read(File.join(dir, 'state.json')))
+      assert_equal '2026-06-23T18:00:00Z', state['no2']['since']
+      assert_nil state['pm25']['since']
+      assert_equal '2026-06-23', state['last_digest_day']
       assert_equal '2026-06-23T19:00:00Z', state['limits']['no2']['hourly']['last_alerted']
+
+      stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      assert_equal({ 'alias' => 'Hawcliffe Rd., Mountsorrel', 'slug' => 'hawcliffe_rd_mountsorrel' },
+                   stations['682'])
+      header = File.open(File.join(dir, 'history', '2026.csv'), &:readline)
+      assert_includes header, 'no2_hawcliffe_rd_mountsorrel'
+      refute_includes header, 'no2_682'
+
+      # second run the same morning: already digested, nothing new
+      run_monitor(dir, collector)
+      assert_equal 1, collector.alerts.size
     end
   end
 
-  def test_implausible_readings_do_not_trigger_alerts
+  def test_quiet_day_posts_nothing_but_advances_state
     Dir.mktmpdir do |dir|
       collector = Collector.new
-      hours = (10..20).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
-      series = { 682 => hours.to_h { |t| [t, [10.0, 2600.0]] },   # broken PM2.5 sensor
+      hours = (0..23).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
+      series = { 682 => hours.to_h { |t| [t, [10.0, 3.0]] },
+                 856 => hours.to_h { |t| [t, [11.0, 3.1]] },
+                 616 => hours.to_h { |t| [t, [9.0, 2.9]] } }
+      monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, series),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [collector], now: NOW, root: dir)
+      capture_io { monitor.run }
+      assert_empty collector.alerts
+      state = JSON.parse(File.read(File.join(dir, 'state.json')))
+      assert_equal '2026-06-23', state['last_digest_day']
+    end
+  end
+
+  def test_implausible_readings_reported_as_data_problem_not_elevation
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      hours = (0..23).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
+      series = { 682 => hours.to_h { |t| [t, [10.0, 2600.0]] },   # broken PM2.5 sensor all day
                  856 => hours.to_h { |t| [t, [10.0, 3.0]] },
                  616 => hours.to_h { |t| [t, [10.0, 3.0]] } }
       monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, series),
                                   archive: Dust::Archive.new(File.join(dir, 'history')),
                                   notifiers: [collector], now: NOW, root: dir)
       capture_io { monitor.run }
-      assert_empty collector.alerts
+      assert_equal 1, collector.alerts.size
+      body = collector.alerts.first[1]
+      assert_includes body, '## Data problems'
+      assert_includes body, 'implausible'
+      refute_includes body, '## Elevated vs other stations'
     end
   end
 
@@ -410,6 +352,33 @@ class MonitorTest < Minitest::Test
                                   archive: Dust::Archive.new(File.join(dir, 'history')),
                                   notifiers: [], now: NOW, root: dir)
       assert_raises(RuntimeError) { capture_io { monitor.run } }
+    end
+  end
+
+  def test_legacy_stations_json_upgraded_and_slugs_pinned
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, 'stations.json'),
+                 JSON.generate('682' => 'Old Hawcliffe Name', '999' => { 'alias' => 'Gone', 'slug' => 'gone' }))
+      collector = Collector.new
+      run_monitor(dir, collector)
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      # legacy string entry upgraded; slug pinned from the OLD alias, new alias recorded
+      assert_equal 'old_hawcliffe_name', reg['682']['slug']
+      assert_equal 'Hawcliffe Rd., Mountsorrel', reg['682']['alias']
+      assert_equal 'gone', reg['999']['slug'] # absent stations keep their entry
+    end
+  end
+
+  def test_slug_collision_gets_id_suffix
+    Dir.mktmpdir do |dir|
+      stations = [STATIONS[0], STATIONS[1].merge('alias' => 'Hawcliffe Rd., Mountsorrel')]
+      monitor = Dust::Monitor.new(client: FakeClient.new(stations, spike_series),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [Collector.new], now: NOW, root: dir)
+      capture_io { monitor.run }
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      slugs = reg.values.map { |v| v['slug'] }.sort
+      assert_equal ['hawcliffe_rd_mountsorrel', 'hawcliffe_rd_mountsorrel_856'], slugs
     end
   end
 end
@@ -553,12 +522,108 @@ class LimitsCheckTest < Minitest::Test
   end
 end
 
+class SlugTest < Minitest::Test
+  def test_slugify
+    assert_equal 'hawcliffe_rd_mountsorrel', Dust.slugify('Hawcliffe Rd., Mountsorrel')
+    assert_equal 'test_site', Dust.slugify('(Test) Site!')
+    assert_equal 'ashby_rd_loughborough', Dust.slugify('Ashby Rd., Loughborough')
+  end
+end
+
+class MigrateColumnsTest < Minitest::Test
+  def test_migrates_id_headers_to_slugs_idempotently
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, 'stations.json'),
+                 JSON.generate('682' => 'Hawcliffe Rd., Mountsorrel'))
+      FileUtils.mkdir_p(File.join(dir, 'history'))
+      csv = File.join(dir, 'history', '2026.csv')
+      File.write(csv, "hour_utc,no2_682,pm25_682\n2026-07-03T06:00:00Z,10.5,3.2\n")
+      monitor = Dust::Monitor.new(client: nil, archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [], root: dir)
+      capture_io { monitor.migrate_columns }
+      content = File.read(csv)
+      assert_includes content, 'hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel'
+      assert_includes content, '2026-07-03T06:00:00Z,10.5,3.2'
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      assert_equal 'hawcliffe_rd_mountsorrel', reg['682']['slug']
+      capture_io { monitor.migrate_columns } # idempotent
+      assert_equal content, File.read(csv)
+    end
+  end
+end
+
+class RunsTest < Minitest::Test
+  def hours(n, from: Time.utc(2026, 7, 3, 0))
+    (0...n).map { |i| (from + i * 3600).strftime('%Y-%m-%dT%H:00:00Z') }
+  end
+
+  def test_detects_runs_of_two_or_more
+    w = hours(12)
+    runs = Dust::Episodes.runs(w, Set[w[3], w[4], w[5], w[8]])
+    assert_equal [{ start: w[3], last: w[5], len: 3 }], runs
+  end
+
+  def test_ignores_isolated_hours
+    w = hours(12)
+    assert_empty Dust::Episodes.runs(w, Set[w[2], w[6]])
+  end
+
+  def test_non_adjacent_qualifying_hours_split
+    w = hours(12)
+    runs = Dust::Episodes.runs(w, Set[w[1], w[2], w[7], w[8], w[9]])
+    assert_equal [w[1], w[7]], runs.map { |r| r[:start] }
+  end
+
+  def test_new_runs_since_dedupe
+    w = hours(12)
+    q = Set[w[1], w[2], w[7], w[8]]
+    assert_equal [w[1], w[7]], Dust::Episodes.new_runs(w, q, nil).map { |r| r[:start] }
+    assert_equal [w[7]], Dust::Episodes.new_runs(w, q, w[1]).map { |r| r[:start] }
+    assert_empty Dust::Episodes.new_runs(w, q, w[7])
+  end
+end
+
+class DigestFormatTest < Minitest::Test
+  def test_titles
+    assert_equal 'Air quality digest — Hawcliffe Rd, Fri 3 Jul 2026',
+                 Dust::Alerts.digest_title('2026-07-03', '2026-07-03')
+    assert_equal 'Air quality digest — Hawcliffe Rd, Mon 29 Jun 2026 to Fri 3 Jul 2026',
+                 Dust::Alerts.digest_title('2026-06-29', '2026-07-03')
+  end
+
+  def test_body_sections
+    episodes = [{ species: 'no2', start: '2026-06-23T18:00:00Z', last: '2026-06-23T20:00:00Z',
+                  ongoing: false, peak: 235.6, others_mean: 77.4 }]
+    limit_titles = ['NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 2nd exceedance this year, 18 permitted']
+    problems = ['2026-06-23: only 11/24 hourly NO₂ values reported']
+    day_means = { '2026-06-23' => { '682' => { 'no2' => 81.4, 'pm25' => nil } } }
+    aliases = { '682' => 'Hawcliffe Rd., Mountsorrel' }
+    body = Dust::Alerts.digest_body(episodes, limit_titles, problems, day_means, aliases)
+    assert_includes body, '## Elevated vs other stations'
+    assert_includes body, '**NO₂** 23 Jun 19:00–23 Jun 21:00: peak **235.6 µg/m³** vs 77.4 across the other stations (3.0×)'
+    assert_includes body, '## Over EU legal limits'
+    assert_includes body, '2nd exceedance this year'
+    assert_includes body, '## Data problems'
+    assert_includes body, '## Daily means (µg/m³)'
+    assert_includes body, '| Hawcliffe Rd., Mountsorrel | 81.4 | – |'
+    assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
+  end
+
+  def test_body_omits_empty_sections_and_marks_ongoing
+    episodes = [{ species: 'pm25', start: '2026-07-03T01:00:00Z', last: '2026-07-03T04:00:00Z',
+                  ongoing: true, peak: 22.0, others_mean: 5.5 }]
+    body = Dust::Alerts.digest_body(episodes, [], [], {}, {})
+    assert_includes body, '(ongoing)'
+    refute_includes body, '## Over EU legal limits'
+    refute_includes body, '## Data problems'
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])
     assert_equal({ ratio: 1.5, diff: 5.0 }, Dust::RULES['pm25'])
     assert_equal 2, Dust::PERSIST_HOURS
-    assert_equal 6, Dust::QUIET_HOURS
   end
 
   def test_limits_are_the_currently_in_force_eu_values

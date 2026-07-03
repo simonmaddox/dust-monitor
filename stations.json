@@ -1,7 +1,22 @@
 {
-  "856": "Ashby Rd., Loughborough",
-  "682": "Hawcliffe Rd., Mountsorrel",
-  "1137": "Wolsey Way, Loughborough",
-  "616": "Whetstone Way, Whetstone",
-  "1754": "Cobden Primary School, Loughborough"
+  "856": {
+    "alias": "Ashby Rd., Loughborough",
+    "slug": "ashby_rd_loughborough"
+  },
+  "682": {
+    "alias": "Hawcliffe Rd., Mountsorrel",
+    "slug": "hawcliffe_rd_mountsorrel"
+  },
+  "1137": {
+    "alias": "Wolsey Way, Loughborough",
+    "slug": "wolsey_way_loughborough"
+  },
+  "616": {
+    "alias": "Whetstone Way, Whetstone",
+    "slug": "whetstone_way_whetstone"
+  },
+  "1754": {
+    "alias": "Cobden Primary School, Loughborough",
+    "slug": "cobden_primary_school_loughborough"
+  }
 }

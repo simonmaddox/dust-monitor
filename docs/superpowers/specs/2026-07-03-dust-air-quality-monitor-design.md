@@ -132,6 +132,47 @@ The Hawcliffe PM2.5 sensor malfunctioned for ~432 hours in mid-2025 (readings up
 implausible readings: negative values, NO₂ > 1,000 µg/m³, PM2.5 > 500 µg/m³.
 The archive keeps raw values untouched; filtering happens at read/evaluation time.
 
+## Daily digest (amendment, 2026-07-03 — supersedes hourly alerting)
+
+The monitor moves from hourly alert runs to a **daily digest**:
+
+- **Cadence**: cron `15 6 * * *` (06:15 UTC), after the previous UTC day settles.
+  Manual dispatch modes unchanged. Data still self-heals across any gap.
+- **Reporting period**: all complete UTC days since `state.last_digest_day`
+  (normally one; capped at 7 after outages). Re-runs the same day are no-ops for
+  notification.
+- **Noteworthy test** — an issue is opened only if the period contains at least one:
+  - **elevation episode**: a qualifying run (existing calibrated rules, ≥ 2
+    consecutive hours) starting after `state.since` for that species. The hourly
+    model's staleness suppression, `active` flag and 6-hour re-arm are removed —
+    retrospective reporting is the point. Multiple episodes are each listed with
+    start–end (London time), peak value and the comparators' mean at the peak.
+    Runs extending into the current day are included (marked ongoing) and deduped
+    from the next digest by `since`.
+  - **limit event**: new NO₂ hour(s) over 200 µg/m³ (baseline: start of the report
+    period on first run), or an annual-mean crossing. In-force limits unchanged.
+  - **data problem at Hawcliffe**: a reported day with < 18 of 24 hourly values, or
+    any implausible readings filtered that day.
+- **Digest content**: one issue titled `Air quality digest — Hawcliffe Rd, <date>`
+  (or date range), with only the sections that occurred, plus a context table of
+  daily mean NO₂/PM2.5 for every station on each reported day.
+- **State** (`state.json`): per species `{since}` only; plus `last_digest_day` and
+  the existing `limits` section. Old keys (`active`, `last_alert`) are ignored on
+  load. State is written after successful notification, as before.
+- Quiet days: archive and state still update; nothing is posted; the run prints its
+  evaluation to the Actions log.
+
+## History CSV columns (amendment, 2026-07-03)
+
+Columns use **human-readable slugs**, not station numbers: `no2_hawcliffe_rd_mountsorrel`,
+`pm25_ashby_rd_loughborough`, … A station's slug is derived from its alias
+(lowercase, non-alphanumerics → `_`) the first time it is seen and **pinned** in
+`stations.json` (`{"682": {"alias": "Hawcliffe Rd., Mountsorrel", "slug":
+"hawcliffe_rd_mountsorrel"}}`), so later council renames never fork columns.
+Slug collisions get a numeric suffix. A one-off `migrate-columns` CLI mode rewrites
+existing CSV headers from `no2_<id>` to slug form (idempotent; values untouched).
+The README documents the data format.
+
 ## Notifications
 
 A minimal notifier interface: `notify(title, body)`. Implementations:
