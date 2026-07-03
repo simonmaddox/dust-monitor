@@ -107,6 +107,48 @@ module Dust
       return [nil, vals.size] if vals.size < ANNUAL_MIN_HOURS
       [vals.sum / vals.size, vals.size]
     end
+
+    # Evaluate all EU limit checks for one species over a calendar year of data.
+    # Returns [new_state, alerts]; alerts are [period, items, headline_value, ytd_count].
+    def check(species, year_series, state, window_start:, today:)
+      cfg = LIMITS.fetch(species)
+      state = { 'hourly' => {}, 'daily' => {}, 'annual' => {} }.merge(state || {})
+      series = plausible(year_series, species)
+      alerts = []
+
+      if cfg[:hourly]
+        exc = exceedance_hours(series, cfg[:hourly][:limit])
+        baseline = state['hourly']['last_alerted'] || window_start
+        fresh = exc.select { |h| h > baseline }
+        if fresh.any?
+          peak = fresh.max_by { |h| series[h] }
+          alerts << [:hourly, fresh, series[peak], exc.size]
+          state['hourly'] = state['hourly'].merge('last_alerted' => exc.last)
+        end
+      end
+
+      if cfg[:daily]
+        means = daily_means(series)
+        exc = exceedance_days(means, cfg[:daily][:limit]).select { |d| d < today.to_s }
+        baseline = state['daily']['last_alerted'] || (today - 2).to_s
+        fresh = exc.select { |d| d > baseline }
+        if fresh.any?
+          peak = fresh.max_by { |d| means[d] }
+          alerts << [:daily, fresh, means[peak], exc.size]
+          state['daily'] = state['daily'].merge('last_alerted' => exc.last)
+        end
+      end
+
+      if cfg[:annual]
+        mean, = annual_mean(series)
+        if mean && mean > cfg[:annual][:limit] && state['annual']['alerted_year'] != today.year
+          alerts << [:annual, [], mean, nil]
+          state['annual'] = state['annual'].merge('alerted_year' => today.year)
+        end
+      end
+
+      [state, alerts]
+    end
   end
 
   module Episodes
@@ -476,8 +518,8 @@ module Dust
       alerts = []
 
       RULES.each do |species, rule|
-        tseries = series["#{species}_#{target['zNumber']}"]
-        oseries = others.map { |z| series["#{species}_#{z['zNumber']}"] }
+        tseries = Limits.plausible(series["#{species}_#{target['zNumber']}"], species)
+        oseries = others.map { |z| Limits.plausible(series["#{species}_#{z['zNumber']}"], species) }
         qualifying = Rules.qualifying_hours(tseries, oseries,
                                             ratio: rule[:ratio], diff: rule[:diff])
         new_state, run_start = Episodes.step(state[species], hours, qualifying, now: @now)
@@ -494,6 +536,22 @@ module Dust
              "active=#{new_state['active']}#{run_start ? ", ALERT (since #{run_start})" : ''}"
       end
 
+      limits_state = state['limits'] || {}
+      RULES.each_key do |species|
+        year_series = @archive.column_year("#{species}_#{target['zNumber']}", @now.year)
+        new_ls, limit_alerts = Limits.check(species, year_series, limits_state[species],
+                                            window_start: hours.first || end_hour,
+                                            today: @now.to_date)
+        limit_alerts.each do |period, items, value, count|
+          allowed = LIMITS[species][period][:allowed]
+          alerts << [Alerts.limit_title(species, period, value, count, allowed),
+                     Alerts.limit_body(species, period, items, count, allowed)]
+        end
+        limits_state[species] = new_ls
+        puts "limits #{species}: #{limit_alerts.map { |p, *_| p }.join(',')}" unless limit_alerts.empty?
+      end
+      state['limits'] = limits_state
+
       if @dry_run
         puts "dry-run: state not written: #{JSON.generate(state)}"
         alerts.each { |t, b| puts "dry-run alert: #{t}\n#{b}" }
@@ -506,9 +564,11 @@ module Dust
     def load_state
       path = File.join(@root, 'state.json')
       raw = File.exist?(path) ? JSON.parse(File.read(path)) : {}
-      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.merge(raw[sp] || {})] }
+      state = RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.merge(raw[sp] || {})] }
+      state['limits'] = raw['limits'] || {}
+      state
     rescue JSON::ParserError
-      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.dup] }
+      RULES.keys.to_h { |sp| [sp, Episodes::EMPTY.dup] }.merge('limits' => {})
     end
 
     def write_json(name, obj)

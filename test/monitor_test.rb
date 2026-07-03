@@ -321,8 +321,9 @@ class MonitorTest < Minitest::Test
     Dir.mktmpdir do |dir|
       collector = Collector.new
       run_monitor(dir, collector)
-      assert_equal 1, collector.alerts.size
-      title, body = collector.alerts.first
+      # the spike triggers both the elevation alert and the EU hourly limit alert
+      assert_equal 2, collector.alerts.size
+      title, body = collector.alerts.find { |t, _| t.include?('elevated') }
       assert_match(/NO₂ elevated at Hawcliffe Rd: 236 µg\/m³ vs 77/, title)
       assert_includes body, 'Hawcliffe Rd., Mountsorrel'
       state = JSON.parse(File.read(File.join(dir, 'state.json')))
@@ -330,9 +331,36 @@ class MonitorTest < Minitest::Test
       refute state['pm25']['active']
       stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
       assert_equal 'Hawcliffe Rd., Mountsorrel', stations['682']
-      # second run over same data: no duplicate alert
+      # second run over same data: no duplicate alerts of either kind
       run_monitor(dir, collector)
-      assert_equal 1, collector.alerts.size
+      assert_equal 2, collector.alerts.size
+    end
+  end
+
+  def test_limit_alert_fires_for_over_200_hours
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      run_monitor(dir, collector)
+      limit_alerts = collector.alerts.select { |t, _| t.include?('over EU hourly limit') }
+      assert_equal 1, limit_alerts.size
+      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 3 permitted/, limit_alerts.first[0])
+      state = JSON.parse(File.read(File.join(dir, 'state.json')))
+      assert_equal '2026-06-23T19:00:00Z', state['limits']['no2']['hourly']['last_alerted']
+    end
+  end
+
+  def test_implausible_readings_do_not_trigger_alerts
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      hours = (10..20).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
+      series = { 682 => hours.to_h { |t| [t, [10.0, 2600.0]] },   # broken PM2.5 sensor
+                 856 => hours.to_h { |t| [t, [10.0, 3.0]] },
+                 616 => hours.to_h { |t| [t, [10.0, 3.0]] } }
+      monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, series),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [collector], now: NOW, root: dir)
+      capture_io { monitor.run }
+      assert_empty collector.alerts
     end
   end
 
@@ -458,6 +486,56 @@ class LimitAlertsTest < Minitest::Test
     assert_includes body, '5 exceedance hours so far this year (3 permitted)'
     assert_includes body, '2024/2881'
     assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
+  end
+end
+
+class LimitsCheckTest < Minitest::Test
+  W = '2026-07-03T00:00:00Z'
+  TODAY = Date.new(2026, 7, 3)
+
+  def test_new_hourly_exceedance_alerts_and_dedupes
+    s = { '2026-06-23T19:00:00Z' => 235.6, '2026-07-03T09:00:00Z' => 250.0 }
+    state, alerts = Dust::Limits.check('no2', s, nil, window_start: W, today: TODAY)
+    assert_equal 1, alerts.size
+    period, items, value, count = alerts.first
+    assert_equal :hourly, period
+    assert_equal ['2026-07-03T09:00:00Z'], items   # June exceedance predates baseline
+    assert_in_delta 250.0, value
+    assert_equal 2, count                          # but the YTD count includes June
+    assert_equal '2026-07-03T09:00:00Z', state['hourly']['last_alerted']
+    # second run: nothing new
+    _, again = Dust::Limits.check('no2', s, state, window_start: W, today: TODAY)
+    assert_empty again
+  end
+
+  def test_daily_exceedance_only_completed_days
+    day_hours = (0..23).to_h { |i| [format('2026-07-02T%02d:00:00Z', i), 60.0] }
+    today_hours = (0..9).to_h { |i| [format('2026-07-03T%02d:00:00Z', i), 60.0] } # incomplete day, ignored
+    state, alerts = Dust::Limits.check('no2', day_hours.merge(today_hours), nil,
+                                       window_start: W, today: TODAY)
+    daily = alerts.find { |p, *_| p == :daily }
+    refute_nil daily
+    assert_equal ['2026-07-02'], daily[1]
+    assert_equal '2026-07-02', state['daily']['last_alerted']
+    _, again = Dust::Limits.check('no2', day_hours.merge(today_hours), state,
+                                  window_start: W, today: TODAY)
+    assert_nil again.find { |p, *_| p == :daily }
+  end
+
+  def test_annual_crossing_alerts_once_per_year
+    s = (0..999).to_h { |i| [format('2026-%02d-%02dT%02d:00:00Z', 1 + i / 480, 1 + (i / 24) % 20, i % 24), 30.0] }
+    state, alerts = Dust::Limits.check('no2', s, nil, window_start: W, today: TODAY)
+    annual = alerts.find { |p, *_| p == :annual }
+    refute_nil annual
+    assert_equal 2026, state['annual']['alerted_year']
+    _, again = Dust::Limits.check('no2', s, state, window_start: W, today: TODAY)
+    assert_nil again.find { |p, *_| p == :annual }
+  end
+
+  def test_no_pm25_hourly_check
+    s = { '2026-07-03T09:00:00Z' => 400.0 } # over NO2 hourly limit but pm25 has no hourly rule
+    _, alerts = Dust::Limits.check('pm25', s, nil, window_start: W, today: TODAY)
+    assert_nil alerts.find { |p, *_| p == :hourly }
   end
 end
 
