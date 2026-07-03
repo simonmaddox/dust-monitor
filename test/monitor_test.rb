@@ -361,6 +361,21 @@ class MonitorTest < Minitest::Test
     end
   end
 
+  def test_backfill_skips_months_before_each_stations_install
+    Dir.mktmpdir do |dir|
+      stations = [STATIONS[0],
+                  STATIONS[1].merge('locationStartTimeDate' => '2022-08-02 09:00:00')]
+      client = FakeClient.new(stations, spike_series)
+      monitor = Dust::Monitor.new(client: client, archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [], now: Time.utc(2022, 8, 15), root: dir)
+      capture_io { monitor.backfill }
+      # 682 fetched for Jun/Jul/Aug; 856 only for Aug
+      assert_equal 4, client.calls.size
+      assert_equal [682, 682, 682, 856], client.calls.map(&:first).sort
+      assert_equal Time.utc(2022, 8, 1), client.calls.find { |c| c[0] == 856 }[1]
+    end
+  end
+
   def test_run_fails_without_hawcliffe
     Dir.mktmpdir do |dir|
       monitor = Dust::Monitor.new(client: FakeClient.new([STATIONS[1]], {}),

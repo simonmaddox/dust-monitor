@@ -251,6 +251,7 @@ module Dust
         res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 180) do |http|
           http.request(req)
         end
+        return {} if res.code == '240' # EarthSense: no data for the requested period
         raise "HTTP #{res.code} for #{url}" unless res.code == '200'
         JSON.parse(res.body)
       end
@@ -328,9 +329,15 @@ module Dust
 
     def backfill
       stations = @client.stations
-      earliest = stations.map { |z| Time.parse("#{z['locationStartTimeDate']} UTC") }.min
-      each_month_chunk(Time.utc(earliest.year, earliest.month, 1), @now) do |c_from, c_to|
-        stations.each { |z| @archive.append(rows_for(z, c_from, c_to)) }
+      starts = stations.to_h do |z|
+        t = Time.parse("#{z['locationStartTimeDate']} UTC")
+        [z['zNumber'], Time.utc(t.year, t.month, 1)]
+      end
+      each_month_chunk(starts.values.min, @now) do |c_from, c_to|
+        stations.each do |z|
+          next if c_to <= starts[z['zNumber']]
+          @archive.append(rows_for(z, c_from, c_to))
+        end
         puts "backfilled #{c_from.strftime('%Y-%m')}"
       end
     end
