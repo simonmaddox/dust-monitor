@@ -592,6 +592,28 @@ class SlugTest < Minitest::Test
   end
 end
 
+class MigrateColumnsTest < Minitest::Test
+  def test_migrates_id_headers_to_slugs_idempotently
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, 'stations.json'),
+                 JSON.generate('682' => 'Hawcliffe Rd., Mountsorrel'))
+      FileUtils.mkdir_p(File.join(dir, 'history'))
+      csv = File.join(dir, 'history', '2026.csv')
+      File.write(csv, "hour_utc,no2_682,pm25_682\n2026-07-03T06:00:00Z,10.5,3.2\n")
+      monitor = Dust::Monitor.new(client: nil, archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [], root: dir)
+      capture_io { monitor.migrate_columns }
+      content = File.read(csv)
+      assert_includes content, 'hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel'
+      assert_includes content, '2026-07-03T06:00:00Z,10.5,3.2'
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      assert_equal 'hawcliffe_rd_mountsorrel', reg['682']['slug']
+      capture_io { monitor.migrate_columns } # idempotent
+      assert_equal content, File.read(csv)
+    end
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

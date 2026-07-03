@@ -489,6 +489,26 @@ module Dust
       end
     end
 
+    # One-off: rewrite history CSV headers from no2_<id> to no2_<slug>.
+    def migrate_columns
+      @registry = station_registry([])
+      write_json('stations.json', @registry)
+      Dir[File.join(@root, 'history', '*.csv')].sort.each do |path|
+        rows = CSV.read(path)
+        rows[0] = rows[0].map do |c|
+          m = c.match(/\A(no2|pm25)_(\d+)\z/)
+          if m && @registry[m[2]]
+            "#{m[1]}_#{@registry[m[2]]['slug']}"
+          else
+            warn "unknown station id in #{File.basename(path)}: #{c}" if m
+            c
+          end
+        end
+        CSV.open(path, 'w') { |csv| rows.each { |r| csv << r } }
+        puts "migrated #{File.basename(path)}"
+      end
+    end
+
     private
 
     # id => {'alias','slug'}; slugs are assigned once and pinned in stations.json
