@@ -343,7 +343,7 @@ class MonitorTest < Minitest::Test
       run_monitor(dir, collector)
       limit_alerts = collector.alerts.select { |t, _| t.include?('over EU hourly limit') }
       assert_equal 1, limit_alerts.size
-      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 3 permitted/, limit_alerts.first[0])
+      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 18 permitted/, limit_alerts.first[0])
       state = JSON.parse(File.read(File.join(dir, 'state.json')))
       assert_equal '2026-06-23T19:00:00Z', state['limits']['no2']['hourly']['last_alerted']
     end
@@ -471,20 +471,20 @@ class LimitAlertsTest < Minitest::Test
   end
 
   def test_hourly_limit_title
-    assert_equal 'NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 5th exceedance this year, 3 permitted',
-                 Dust::Alerts.limit_title('no2', :hourly, 235.58, 5, 3)
+    assert_equal 'NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 19th exceedance this year, 18 permitted',
+                 Dust::Alerts.limit_title('no2', :hourly, 235.58, 19, 18)
   end
 
   def test_annual_limit_title
-    assert_equal 'PM2.5 year-to-date mean over EU annual limit at Hawcliffe Rd: 12.4 µg/m³ (limit 10)',
-                 Dust::Alerts.limit_title('pm25', :annual, 12.41, nil, nil)
+    assert_equal 'PM2.5 year-to-date mean over EU annual limit at Hawcliffe Rd: 26.4 µg/m³ (limit 25)',
+                 Dust::Alerts.limit_title('pm25', :annual, 26.41, nil, nil)
   end
 
   def test_limit_body
-    body = Dust::Alerts.limit_body('no2', :hourly, ['2026-07-03T12:00:00Z'], 5, 3)
+    body = Dust::Alerts.limit_body('no2', :hourly, ['2026-07-03T12:00:00Z'], 5, 18)
     assert_includes body, '03 Jul 13:00'
-    assert_includes body, '5 exceedance hours so far this year (3 permitted)'
-    assert_includes body, '2024/2881'
+    assert_includes body, '5 exceedance hours so far this year (18 permitted)'
+    assert_includes body, '2008/50/EC'
     assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
   end
 end
@@ -508,28 +508,42 @@ class LimitsCheckTest < Minitest::Test
     assert_empty again
   end
 
-  def test_daily_exceedance_only_completed_days
+  def test_no_daily_check_under_current_limits
+    day_hours = (0..23).to_h { |i| [format('2026-07-02T%02d:00:00Z', i), 60.0] } # mean 60, over the 2030 daily 50
+    _, alerts = Dust::Limits.check('no2', day_hours, nil, window_start: W, today: TODAY)
+    assert_nil alerts.find { |p, *_| p == :daily }
+  end
+
+  def test_daily_machinery_works_when_configured # dormant until the 2030 limits apply
     day_hours = (0..23).to_h { |i| [format('2026-07-02T%02d:00:00Z', i), 60.0] }
     today_hours = (0..9).to_h { |i| [format('2026-07-03T%02d:00:00Z', i), 60.0] } # incomplete day, ignored
+    cfg = { daily: { limit: 50.0, allowed: 18 } }
     state, alerts = Dust::Limits.check('no2', day_hours.merge(today_hours), nil,
-                                       window_start: W, today: TODAY)
+                                       window_start: W, today: TODAY, cfg: cfg)
     daily = alerts.find { |p, *_| p == :daily }
     refute_nil daily
     assert_equal ['2026-07-02'], daily[1]
     assert_equal '2026-07-02', state['daily']['last_alerted']
     _, again = Dust::Limits.check('no2', day_hours.merge(today_hours), state,
-                                  window_start: W, today: TODAY)
+                                  window_start: W, today: TODAY, cfg: cfg)
     assert_nil again.find { |p, *_| p == :daily }
   end
 
   def test_annual_crossing_alerts_once_per_year
-    s = (0..999).to_h { |i| [format('2026-%02d-%02dT%02d:00:00Z', 1 + i / 480, 1 + (i / 24) % 20, i % 24), 30.0] }
+    s = (0..999).to_h { |i| [format('2026-%02d-%02dT%02d:00:00Z', 1 + i / 480, 1 + (i / 24) % 20, i % 24), 45.0] }
     state, alerts = Dust::Limits.check('no2', s, nil, window_start: W, today: TODAY)
     annual = alerts.find { |p, *_| p == :annual }
     refute_nil annual
+    assert_in_delta 45.0, annual[2]
     assert_equal 2026, state['annual']['alerted_year']
     _, again = Dust::Limits.check('no2', s, state, window_start: W, today: TODAY)
     assert_nil again.find { |p, *_| p == :annual }
+  end
+
+  def test_annual_mean_under_current_limit_no_alert
+    s = (0..999).to_h { |i| [format('2026-%02d-%02dT%02d:00:00Z', 1 + i / 480, 1 + (i / 24) % 20, i % 24), 30.0] }
+    _, alerts = Dust::Limits.check('no2', s, nil, window_start: W, today: TODAY)
+    assert_nil alerts.find { |p, *_| p == :annual } # 30 breaches the 2030 limit (20) but not today's (40)
   end
 
   def test_no_pm25_hourly_check
@@ -545,5 +559,11 @@ class ConstantsTest < Minitest::Test
     assert_equal({ ratio: 1.5, diff: 5.0 }, Dust::RULES['pm25'])
     assert_equal 2, Dust::PERSIST_HOURS
     assert_equal 6, Dust::QUIET_HOURS
+  end
+
+  def test_limits_are_the_currently_in_force_eu_values
+    assert_equal({ hourly: { limit: 200.0, allowed: 18 }, annual: { limit: 40.0 } },
+                 Dust::LIMITS['no2'])
+    assert_equal({ annual: { limit: 25.0 } }, Dust::LIMITS['pm25'])
   end
 end
