@@ -1,0 +1,30 @@
+{
+  "no2": {
+    "active": false,
+    "since": null,
+    "last_alert": null
+  },
+  "pm25": {
+    "active": false,
+    "since": null,
+    "last_alert": null
+  },
+  "limits": {
+    "no2": {
+      "hourly": {
+      },
+      "daily": {
+      },
+      "annual": {
+      }
+    },
+    "pm25": {
+      "hourly": {
+      },
+      "daily": {
+      },
+      "annual": {
+      }
+    }
+  }
+}
