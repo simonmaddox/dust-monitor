@@ -1,0 +1,41 @@
+name: monitor
+on:
+  schedule:
+    - cron: '15 * * * *'   # :15 past the hour, after hourly averages settle
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Mode
+        type: choice
+        options: [run, dry-run, backfill]
+        default: run
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+permissions:
+  contents: write
+  issues: write
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run monitor
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'run' }}"
+          if [ "$MODE" = "dry-run" ]; then
+            ruby monitor.rb run --dry-run
+          else
+            ruby monitor.rb "$MODE"
+          fi
+      - name: Commit data
+        run: |
+          git config user.name 'dust-monitor'
+          git config user.email 'dust-monitor@users.noreply.github.com'
+          git add state.json stations.json history/ 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "monitor: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
