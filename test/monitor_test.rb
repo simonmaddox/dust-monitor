@@ -330,7 +330,11 @@ class MonitorTest < Minitest::Test
       assert state['no2']['active']
       refute state['pm25']['active']
       stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
-      assert_equal 'Hawcliffe Rd., Mountsorrel', stations['682']
+      assert_equal({ 'alias' => 'Hawcliffe Rd., Mountsorrel', 'slug' => 'hawcliffe_rd_mountsorrel' },
+                   stations['682'])
+      header = File.open(File.join(dir, 'history', '2026.csv'), &:readline)
+      assert_includes header, 'no2_hawcliffe_rd_mountsorrel'
+      refute_includes header, 'no2_682'
       # second run over same data: no duplicate alerts of either kind
       run_monitor(dir, collector)
       assert_equal 2, collector.alerts.size
@@ -410,6 +414,33 @@ class MonitorTest < Minitest::Test
                                   archive: Dust::Archive.new(File.join(dir, 'history')),
                                   notifiers: [], now: NOW, root: dir)
       assert_raises(RuntimeError) { capture_io { monitor.run } }
+    end
+  end
+
+  def test_legacy_stations_json_upgraded_and_slugs_pinned
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, 'stations.json'),
+                 JSON.generate('682' => 'Old Hawcliffe Name', '999' => { 'alias' => 'Gone', 'slug' => 'gone' }))
+      collector = Collector.new
+      run_monitor(dir, collector)
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      # legacy string entry upgraded; slug pinned from the OLD alias, new alias recorded
+      assert_equal 'old_hawcliffe_name', reg['682']['slug']
+      assert_equal 'Hawcliffe Rd., Mountsorrel', reg['682']['alias']
+      assert_equal 'gone', reg['999']['slug'] # absent stations keep their entry
+    end
+  end
+
+  def test_slug_collision_gets_id_suffix
+    Dir.mktmpdir do |dir|
+      stations = [STATIONS[0], STATIONS[1].merge('alias' => 'Hawcliffe Rd., Mountsorrel')]
+      monitor = Dust::Monitor.new(client: FakeClient.new(stations, spike_series),
+                                  archive: Dust::Archive.new(File.join(dir, 'history')),
+                                  notifiers: [Collector.new], now: NOW, root: dir)
+      capture_io { monitor.run }
+      reg = JSON.parse(File.read(File.join(dir, 'stations.json')))
+      slugs = reg.values.map { |v| v['slug'] }.sort
+      assert_equal ['hawcliffe_rd_mountsorrel', 'hawcliffe_rd_mountsorrel_856'], slugs
     end
   end
 end
@@ -550,6 +581,14 @@ class LimitsCheckTest < Minitest::Test
     s = { '2026-07-03T09:00:00Z' => 400.0 } # over NO2 hourly limit but pm25 has no hourly rule
     _, alerts = Dust::Limits.check('pm25', s, nil, window_start: W, today: TODAY)
     assert_nil alerts.find { |p, *_| p == :hourly }
+  end
+end
+
+class SlugTest < Minitest::Test
+  def test_slugify
+    assert_equal 'hawcliffe_rd_mountsorrel', Dust.slugify('Hawcliffe Rd., Mountsorrel')
+    assert_equal 'test_site', Dust.slugify('(Test) Site!')
+    assert_equal 'ashby_rd_loughborough', Dust.slugify('Ashby Rd., Loughborough')
   end
 end
 

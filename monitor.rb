@@ -39,6 +39,10 @@ module Dust
   LOOKBACK_HOURS = 12
   ROOT = File.expand_path(__dir__)
 
+  def self.slugify(name)
+    name.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/\A_+|_+\z/, '')
+  end
+
   module Parser
     module_function
 
@@ -459,9 +463,8 @@ module Dust
       stations = @client.stations
       target = stations.find { |z| z['alias'] =~ TARGET_ALIAS }
       raise 'No Hawcliffe station found in portal station list' unless target
-      unless @dry_run
-        write_json('stations.json', stations.to_h { |z| [z['zNumber'].to_s, z['alias']] })
-      end
+      @registry = station_registry(stations)
+      write_json('stations.json', @registry) unless @dry_run
 
       each_month_chunk(fetch_start, @now) do |c_from, c_to|
         stations.each { |z| @archive.append(rows_for(z, c_from, c_to)) }
@@ -471,6 +474,8 @@ module Dust
 
     def backfill
       stations = @client.stations
+      @registry = station_registry(stations)
+      write_json('stations.json', @registry)
       starts = stations.to_h do |z|
         t = Time.parse("#{z['locationStartTimeDate']} UTC")
         [z['zNumber'], Time.utc(t.year, t.month, 1)]
@@ -485,6 +490,33 @@ module Dust
     end
 
     private
+
+    # id => {'alias','slug'}; slugs are assigned once and pinned in stations.json
+    def station_registry(stations)
+      path = File.join(@root, 'stations.json')
+      reg = {}
+      if File.exist?(path)
+        JSON.parse(File.read(path)).each do |id, v|
+          reg[id] = v.is_a?(Hash) ? v : { 'alias' => v, 'slug' => Dust.slugify(v) }
+        end
+      end
+      stations.each do |z|
+        id = z['zNumber'].to_s
+        if reg[id]
+          reg[id] = reg[id].merge('alias' => z['alias'])
+        else
+          slug = Dust.slugify(z['alias'])
+          slug = "#{slug}_#{id}" if reg.values.any? { |v| v['slug'] == slug }
+          reg[id] = { 'alias' => z['alias'], 'slug' => slug }
+        end
+      end
+      reg
+    end
+
+    def col(species, z_or_id)
+      id = z_or_id.is_a?(Hash) ? z_or_id['zNumber'].to_s : z_or_id.to_s
+      "#{species}_#{@registry.fetch(id).fetch('slug')}"
+    end
 
     def fetch_start
       lookback = @now - LOOKBACK_HOURS * 3600
@@ -507,7 +539,7 @@ module Dust
       rows = Hash.new { |h, k| h[k] = {} }
       series.each do |sp, by_hour|
         by_hour.each do |hour, val|
-          rows[hour]["#{SPECIES[sp]}_#{station['zNumber']}"] = val if hour < cutoff
+          rows[hour][col(SPECIES[sp], station)] = val if hour < cutoff
         end
       end
       rows
@@ -521,8 +553,8 @@ module Dust
       alerts = []
 
       RULES.each do |species, rule|
-        tseries = Limits.plausible(series["#{species}_#{target['zNumber']}"], species)
-        oseries = others.map { |z| Limits.plausible(series["#{species}_#{z['zNumber']}"], species) }
+        tseries = Limits.plausible(series[col(species, target)], species)
+        oseries = others.map { |z| Limits.plausible(series[col(species, z)], species) }
         qualifying = Rules.qualifying_hours(tseries, oseries,
                                             ratio: rule[:ratio], diff: rule[:diff])
         new_state, run_start = Episodes.step(state[species], hours, qualifying, now: @now)
@@ -541,7 +573,7 @@ module Dust
 
       limits_state = state['limits'] || {}
       RULES.each_key do |species|
-        year_series = @archive.column_year("#{species}_#{target['zNumber']}", @now.year)
+        year_series = @archive.column_year(col(species, target), @now.year)
         new_ls, limit_alerts = Limits.check(species, year_series, limits_state[species],
                                             window_start: hours.first || end_hour,
                                             today: @now.to_date)
