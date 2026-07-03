@@ -35,6 +35,38 @@ class ParserTest < Minitest::Test
   end
 end
 
+class RulesTest < Minitest::Test
+  H1, H2 = '2026-07-03T06:00:00Z', '2026-07-03T07:00:00Z'
+
+  def test_qualifies_on_ratio_and_diff
+    q = Dust::Rules.qualifying_hours({ H1 => 100.0 }, [{ H1 => 20.0 }, { H1 => 20.0 }],
+                                     ratio: 2.5, diff: 30.0)
+    assert_includes q, H1
+  end
+
+  def test_ratio_alone_insufficient
+    # 10 vs mean 2: ratio 5x but diff only 8 < 30
+    q = Dust::Rules.qualifying_hours({ H1 => 10.0 }, [{ H1 => 2.0 }, { H1 => 2.0 }],
+                                     ratio: 2.5, diff: 30.0)
+    assert_empty q
+  end
+
+  def test_diff_alone_insufficient
+    # 130 vs mean 100: diff 30 but ratio 1.3 < 2.5
+    q = Dust::Rules.qualifying_hours({ H1 => 130.0 }, [{ H1 => 100.0 }, { H1 => 100.0 }],
+                                     ratio: 2.5, diff: 30.0)
+    assert_empty q
+  end
+
+  def test_needs_two_comparators
+    q = Dust::Rules.qualifying_hours({ H1 => 100.0, H2 => 100.0 },
+                                     [{ H1 => 20.0 }, { H1 => 20.0, H2 => 20.0 }],
+                                     ratio: 2.5, diff: 30.0)
+    assert_includes q, H1
+    refute_includes q, H2
+  end
+end
+
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
     assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])

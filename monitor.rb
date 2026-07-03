@@ -52,4 +52,17 @@ module Dust
       Time.parse(iso).utc.strftime('%Y-%m-%dT%H:00:00Z')
     end
   end
+
+  module Rules
+    module_function
+
+    def qualifying_hours(target, others, ratio:, diff:)
+      target.each_with_object(Set.new) do |(hour, tv), set|
+        vals = others.map { |o| o[hour] }.compact
+        next if vals.size < MIN_COMPARATORS
+        mean = vals.sum / vals.size
+        set << hour if tv >= ratio * mean && tv - mean >= diff
+      end
+    end
+  end
 end
