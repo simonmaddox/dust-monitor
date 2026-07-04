@@ -139,32 +139,41 @@ LCC depot at the southern end of Hawcliffe Road**, adjacent to the quarry's own
   **"PM₁₀, PM2.5"** only, while NO₂ *is* reported for the council's equivalent
   Loughborough Zephyr (CM6); the ASR's hourly-NO₂ exceedance table (A.5)
   accordingly excludes this location. The Mountsorrel AQMA itself (declared 2011,
-  revoked September 2024) covered PM₁₀ only. The NO₂ exceedances in this report
-  fell into that gap.
+  revoked September 2024) covered PM₁₀ only. This is an understandable scope —
+  both frameworks were set up around particulates from the quarry — but it means
+  the NO₂ record from this location is not routinely examined by any process,
+  and the exceedances in this report are probably being looked at here for the
+  first time.
 - The sensor's immediate neighbours include the depot's own vehicle fleet, the
-  quarry access, and the rail-loading area — all candidate NO₂ sources that a
-  monitor intended to represent residential exposure on Hawcliffe Road would
-  ideally not sit beside.
+  quarry access, and the rail-loading area — all potential NO₂ sources very
+  close to the inlet, which is useful context when interpreting its readings as
+  representative of residential exposure on Hawcliffe Road.
 
-## December 2021 revisited: a breach during a monitoring blackout
+## December 2021 revisited: little corroborating data exists
 
-The compliance reports for the breach period (26 Nov 2021 – 28 Jan 2022) record:
+By unlucky coincidence, the compliance reports for the exceedance period
+(26 Nov 2021 – 28 Jan 2022) record equipment problems affecting the other
+instruments at this location:
 
-- the quarry **weather station was broken** throughout (battery fault, rectified
-  late February 2022) — no usable wind data exists for the breach month;
-- the quarry's **Osiris PM monitor at Stn 9 was down 15 Dec 2021 – 22 Jan 2022**,
-  spanning six of the seven breach days;
+- the quarry **weather station** had a battery fault throughout (rectified late
+  February 2022), so no usable wind data exists for the period;
+- the quarry's **Osiris PM monitor at Stn 9 was offline 15 Dec 2021 –
+  22 Jan 2022**, spanning six of the seven exceedance days;
 - the council's **Partisol PM₁₀ sampler returned no data** for the period.
 
-The council's Zephyr was the only working instrument at that corner — and its
-NO₂ record (19 hours over the hourly limit value) went unreviewed.
+The council's Zephyr was therefore the only instrument still recording at that
+corner, which makes its NO₂ record — not routinely reviewed, as noted above —
+the sole surviving evidence for the period.
 
 Meanwhile the instruments that need no power *did* register something: **Stn 9's
 deposited dust gauge exceeded its investigation trigger in both consecutive
 periods** — 188 mg/m²/day ("High", directional indication SW/W), then 127
-("Elevated"). DustScanAQ's suggested sources were the **rail-loading area
-("toast rack"), PSV stocking grounds, the access road, or businesses along
-Granite Way**; neither investigation reached a conclusion.
+("Elevated"). DustScanAQ identified several candidate sources — the
+**rail-loading area ("toast rack"), PSV stocking grounds, the access road, or
+businesses along Granite Way** — though with the co-located instruments down,
+the specific source understandably could not be determined at the time. The
+NO₂ record now provides an additional line of evidence for revisiting that
+question.
 
 Combined signature of December 2021: sustained heavy diesel activity in the
 Stn 9/depot quarter — daily from ~09:00–10:00 including weekends and the
@@ -199,12 +208,12 @@ than kilometres; the coarse airborne fraction (PM₁₀ − PM2.5) stayed under
    during December 2021 – January 2022** (rail loading schedules, depot fleet
    and gritting records) and on the 2026 evening dates (25 May, 23–24 June,
    19:00–21:00 local).
-6. Resolve the **Zephyr–Osiris discrepancy** formally flagged in the January 2022
-   compliance report ("the Osiris may be underreporting PM2.5… will be
-   investigated") and still visible in the April 2026 report, where the two
-   instruments at the same location differ by roughly a factor of two.
-7. Consider whether the CBC Zephyr's **siting within the depot** is compatible
-   with its purpose of representing air quality for Hawcliffe Road residents —
-   and whether its NO₂ channel should be added to the pollutants reported for
-   site CM5 in the LAQM Annual Status Report, as is already done for the
-   Loughborough Zephyr (CM6).
+6. Revisit the **Zephyr–Osiris comparison** raised in the January 2022 compliance
+   report ("the Osiris may be underreporting PM2.5… will be investigated") —
+   the April 2026 report shows the two instruments at the same location still
+   differing by roughly a factor of two, and resolving which is nearer the truth
+   would benefit everyone using either dataset.
+7. Consider adding the CBC Zephyr's **NO₂ channel** to the pollutants reported
+   for site CM5 in the LAQM Annual Status Report, as is already done for the
+   Loughborough Zephyr (CM6) — and, when interpreting CM5 data, taking account
+   of the monitor's location within the working depot.
