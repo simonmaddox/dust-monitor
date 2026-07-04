@@ -86,6 +86,10 @@ hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd
 - Columns are `<species>_<station slug>`; the slug is assigned from the station's
   name the first time it is seen and **pinned** in `stations.json` (which maps
   EarthSense station ids to `{alias, slug}`), so later renames never fork columns.
+- Species: `no2`, `pm25` (the alerting pair), plus archive-only `pm10` (coarse
+  dust — `pm10 − pm25` is the "dust on cars" fraction), `pm1` (fine/combustion
+  fraction), `no` (fresh-exhaust tracer; a high NO/NO₂ ratio indicates a nearby
+  source), and `o3`. Columns before July 2026 were backfilled retrospectively.
 - An empty cell means no reading. Values are raw as served by the API — including
   implausible ones; filtering happens at evaluation time, not in the archive.
 - Stations appear from their install dates (Hawcliffe/March 2021 onward; the full

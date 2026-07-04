@@ -631,4 +631,26 @@ class ConstantsTest < Minitest::Test
                  Dust::LIMITS['no2'])
     assert_equal({ annual: { limit: 25.0 } }, Dust::LIMITS['pm25'])
   end
+
+  def test_archived_species
+    assert_equal({ 'NO2' => 'no2', 'particulatePM25' => 'pm25', 'particulatePM10' => 'pm10',
+                   'particulatePM1' => 'pm1', 'NO' => 'no', 'O3' => 'o3' }, Dust::SPECIES)
+    # alert rules deliberately cover only NO2 and PM2.5
+    assert_equal %w[no2 pm25], Dust::RULES.keys
+  end
+
+  def test_parser_extracts_new_species_and_tolerates_missing_ones
+    resp = { 'data' => { 'Hourly average on the hour' => { 'slotB' => {
+      'dateTime' => { 'data' => ['2026-07-03T06:00:00+00:00'] },
+      'NO2' => { 'data' => [10.0] },
+      'particulatePM10' => { 'data' => [21.5] },
+      'NO' => { 'data' => [55.0] }
+      # no PM2.5/PM1/O3 channels at all
+    } } } }
+    series = Dust::Parser.hourly_series(resp)
+    assert_equal 21.5, series['particulatePM10']['2026-07-03T06:00:00Z']
+    assert_equal 55.0, series['NO']['2026-07-03T06:00:00Z']
+    assert_equal({}, series['particulatePM1'])
+    assert_equal({}, series['O3'])
+  end
 end
