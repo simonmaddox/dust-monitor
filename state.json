@@ -1,13 +1,9 @@
 {
   "no2": {
-    "active": false,
-    "since": null,
-    "last_alert": null
+    "since": null
   },
   "pm25": {
-    "active": false,
-    "since": null,
-    "last_alert": null
+    "since": null
   },
   "limits": {
     "no2": {
@@ -26,5 +22,6 @@
       "annual": {
       }
     }
-  }
+  },
+  "last_digest_day": "2026-07-03"
 }
