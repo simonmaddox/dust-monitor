@@ -114,3 +114,89 @@ one station — is consistent with an intermittent source close to the sensor
 
 I'm happy to share the extracted dataset, the analysis code, or anything else
 useful.
+
+---
+
+# Addendum (4 July 2026): corroboration from the quarry's own compliance reports
+
+After the report above was prepared, I reviewed the DustScanAQ monthly compliance
+reports for Mountsorrel Quarry (prepared for Tarmac under the Dust Management and
+Monitoring Plan and circulated to LCC, CBC and the Environment Agency) for
+December 2021, January 2022 and April 2026. Read alongside the sensor archive,
+they materially strengthen — and sharpen — the findings above.
+
+## The monitor's context
+
+The council sensor behind all the data above is the **CBC Zephyr located in the
+LCC depot at the southern end of Hawcliffe Road**, adjacent to the quarry's own
+"Stn 9" sampler, on the Mountsorrel Quarry boundary. Two implications:
+
+- **NO₂ is monitored by nobody.** The quarry's DMMP regime covers PM₁₀, PM2.5 and
+  nuisance dust only. The CBC Zephyr measures NO₂ — but its NO₂ channel is not
+  reviewed in any compliance process I can find. The exceedances in this report
+  fell into that gap.
+- The sensor's immediate neighbours include the depot's own vehicle fleet, the
+  quarry access, and the rail-loading area — all candidate NO₂ sources that a
+  monitor intended to represent residential exposure on Hawcliffe Road would
+  ideally not sit beside.
+
+## December 2021 revisited: a breach during a monitoring blackout
+
+The compliance reports for the breach period (26 Nov 2021 – 28 Jan 2022) record:
+
+- the quarry **weather station was broken** throughout (battery fault, rectified
+  late February 2022) — no usable wind data exists for the breach month;
+- the quarry's **Osiris PM monitor at Stn 9 was down 15 Dec 2021 – 22 Jan 2022**,
+  spanning six of the seven breach days;
+- the council's **Partisol PM₁₀ sampler returned no data** for the period.
+
+The council's Zephyr was the only working instrument at that corner — and its
+NO₂ record (19 hours over the hourly limit value) went unreviewed.
+
+Meanwhile the instruments that need no power *did* register something: **Stn 9's
+deposited dust gauge exceeded its investigation trigger in both consecutive
+periods** — 188 mg/m²/day ("High", directional indication SW/W), then 127
+("Elevated"). DustScanAQ's suggested sources were the **rail-loading area
+("toast rack"), PSV stocking grounds, the access road, or businesses along
+Granite Way**; neither investigation reached a conclusion.
+
+Combined signature of December 2021: sustained heavy diesel activity in the
+Stn 9/depot quarter — daily from ~09:00–10:00 including weekends and the
+Christmas holiday week — producing exceptional dust *deposition*, low airborne
+particulate concentrations, and NO₂ up to 386 µg/m³. Newly archived channels
+support proximity: NO was present during the breach hours (up to 124 µg/m³,
+NO/NO₂ ratio 0.1–0.4), indicating a combustion source minutes upwind rather
+than kilometres; the coarse airborne fraction (PM₁₀ − PM2.5) stayed under
+5 µg/m³ during the NO₂ peaks, i.e. engines rather than mineral dust.
+
+## Alternative explanations tested and eliminated
+
+- **Stonehurst Farm car nights** (last Monday monthly, 5pm): all 21 archive-covered
+  car-night evenings tested; 20 show ordinary readings. The single coincidence
+  (25 May 2026) does not establish a pattern.
+- **Stonehurst Christmas events** (annual): only December 2021 shows exceedances;
+  Decembers 2022–2025 have zero hours even above 100 µg/m³. An annual event
+  cannot explain a one-off. (One minor localized PM2.5 event — 26 µg/m³ vs a
+  network mean of 2.5 on the afternoon of 28 Dec 2025 — is consistent with wood
+  smoke and is noted for completeness.)
+- **Quarry blasting** (typically ~12:30): plausibly contributes to the broad
+  weekday midday elevation, but cannot explain the morning-anchored December 2021
+  episodes or the 19:00–20:00 events of 2026. Hourly averaging also dilutes
+  short blast-fume plumes ~5-fold, so the quarry's own 15-minute Stn 9 data is
+  the right instrument for this question.
+
+## Additional requests
+
+4. Cross-reference the quarry **blast log** against the timestamped elevated
+   hours (available in this repository's data archive).
+5. Establish what operated in the **depot / rail-loading ("toast rack") quarter
+   during December 2021 – January 2022** (rail loading schedules, depot fleet
+   and gritting records) and on the 2026 evening dates (25 May, 23–24 June,
+   19:00–21:00 local).
+6. Resolve the **Zephyr–Osiris discrepancy** formally flagged in the January 2022
+   compliance report ("the Osiris may be underreporting PM2.5… will be
+   investigated") and still visible in the April 2026 report, where the two
+   instruments at the same location differ by roughly a factor of two.
+7. Consider whether the CBC Zephyr's **siting within the depot** is compatible
+   with its purpose of representing air quality for Hawcliffe Road residents —
+   and whether its NO₂ channel should be routinely reviewed by someone.
