@@ -162,6 +162,13 @@ The monitor moves from hourly alert runs to a **daily digest**:
 - Quiet days: archive and state still update; nothing is posted; the run prints its
   evaluation to the Actions log.
 
+## Archived species (amendment, 2026-07-04)
+
+Beyond the alerting pair (NO₂, PM2.5), the archive stores `pm10`, `pm1`, `no` and
+`o3` for analysis (coarse-dust fraction, combustion fraction, fresh-exhaust NO/NO₂
+ratio, ozone suppression). Rules and limits remain NO₂/PM2.5 only. History
+backfilled for the new columns.
+
 ## History CSV columns (amendment, 2026-07-03)
 
 Columns use **human-readable slugs**, not station numbers: `no2_hawcliffe_rd_mountsorrel`,

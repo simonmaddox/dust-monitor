@@ -14,7 +14,12 @@ module Dust
   SLUG = 'LeicestershireCCPublic'
   PORTAL_URL = "https://portal.earthsense.co.uk/#{SLUG}"
   TARGET_ALIAS = /hawcliffe/i
-  SPECIES = { 'NO2' => 'no2', 'particulatePM25' => 'pm25' }.freeze
+  # All species archived from the API. Alert rules (RULES/LIMITS) deliberately
+  # cover only NO2 and PM2.5; the rest are stored for analysis: PM10 (coarse
+  # dust), PM1 (fine/combustion fraction), NO (fresh-exhaust tracer — a high
+  # NO/NO2 ratio means a nearby source), O3 (suppressed by fresh NO plumes).
+  SPECIES = { 'NO2' => 'no2', 'particulatePM25' => 'pm25', 'particulatePM10' => 'pm10',
+              'particulatePM1' => 'pm1', 'NO' => 'no', 'O3' => 'o3' }.freeze
   RULES = {
     'no2'  => { ratio: 2.5, diff: 30.0 },
     'pm25' => { ratio: 1.5, diff: 5.0 }
