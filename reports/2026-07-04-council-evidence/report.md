@@ -131,9 +131,15 @@ The council sensor behind all the data above is the **CBC Zephyr located in the
 LCC depot at the southern end of Hawcliffe Road**, adjacent to the quarry's own
 "Stn 9" sampler, on the Mountsorrel Quarry boundary. Two implications:
 
-- **NO₂ is monitored by nobody.** The quarry's DMMP regime covers PM₁₀, PM2.5 and
-  nuisance dust only. The CBC Zephyr measures NO₂ — but its NO₂ channel is not
-  reviewed in any compliance process I can find. The exceedances in this report
+- **The sensor's NO₂ channel sits outside both compliance workflows.** The
+  quarry's DMMP regime covers PM₁₀, PM2.5 and nuisance dust only (no NO₂ appears
+  in any of the monthly compliance reports reviewed: Dec 2021, Jan 2022, Apr
+  2026). Separately, CBC's LAQM Annual Status Report 2024 (Table A.1) registers
+  this monitor — automatic site **CM5 "Mountsorrel"** — as monitoring
+  **"PM₁₀, PM2.5"** only, while NO₂ *is* reported for the council's equivalent
+  Loughborough Zephyr (CM6); the ASR's hourly-NO₂ exceedance table (A.5)
+  accordingly excludes this location. The Mountsorrel AQMA itself (declared 2011,
+  revoked September 2024) covered PM₁₀ only. The NO₂ exceedances in this report
   fell into that gap.
 - The sensor's immediate neighbours include the depot's own vehicle fleet, the
   quarry access, and the rail-loading area — all candidate NO₂ sources that a
@@ -199,4 +205,6 @@ than kilometres; the coarse airborne fraction (PM₁₀ − PM2.5) stayed under
    instruments at the same location differ by roughly a factor of two.
 7. Consider whether the CBC Zephyr's **siting within the depot** is compatible
    with its purpose of representing air quality for Hawcliffe Road residents —
-   and whether its NO₂ channel should be routinely reviewed by someone.
+   and whether its NO₂ channel should be added to the pollutants reported for
+   site CM5 in the LAQM Annual Status Report, as is already done for the
+   Loughborough Zephyr (CM6).
