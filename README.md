@@ -109,3 +109,16 @@ the previous episode semantics.
 
 Design docs: `docs/superpowers/specs/` (what and why, including threshold
 calibration), `docs/superpowers/plans/` (how it was built).
+
+## Data attribution & licensing
+
+The measurements in `history/` originate from **Zephyr® sensors operated by
+[EarthSense Systems Ltd](https://www.earthsense.co.uk/)** on behalf of
+**Leicestershire County Council**, retrieved from the council's freely accessible
+public portal. This repository republishes them in good faith as public-interest
+environmental data; the sensors are indicative instruments, not reference-grade
+analysers, so treat values accordingly. If you are the data owner and would like
+anything changed or removed, please open an issue.
+
+The **code** is released under the [MIT License](LICENSE). The MIT licence covers
+the software only, not the measurement data described above.
