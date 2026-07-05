@@ -171,6 +171,46 @@ one clean non-detection. All three entries are weekdays. The log is already
 earning its keep — more entries, ideally with a note of which surfaces/direction,
 multiply its value.
 
+## June/July 2025 compliance reports (obtained 5 Jul 2026): the log entry confirmed
+
+The quarry's own June and July 2025 reports corroborate the 26–27 June 2025 dust
+log entry, with attribution:
+
+- **Osiris alert, 27/06/2025**: "Exceedance recorded from the southwest at midday
+  and late afternoon… Directional data points towards the **PSV yard** which has
+  **subsequently had improvements made to the dust netting**." The 15-minute
+  trace shows the period's highest peak (~270 µg/m³ PM₁₀) that day, and PM2.5
+  spikes to ~65. The July report states the period's four trigger exceedances
+  were "**all from onsite direction**" (27 Jun SW; 30 Jun S; 4 Jul SW).
+- **Wind** (Met Office WOW Mountsorrel, 1.9 km SE — used because the site weather
+  station was down *again*): predominantly W/SW for 25 Jun – 30 Jul, i.e. from
+  the PSV yard/estate sector towards the sensor and village. June period: SE/S/SW.
+- **June period (29 May – 25 Jun)**: Stn 9's directional pads exceeded the
+  trigger from **SW and W** (0.5/0.6 %EAC — "impact of both on-site (e.g. the PSV
+  yard) and off-site (e.g. industrial activities along Granite Way)"), while the
+  Stn 9 **deposition gauge returned no data "due to contamination"**, the
+  **Osiris was down 17–24 June**, and the Zephyr was railed from 21 June — a
+  near-repeat of the December 2021 pattern in which every powered instrument at
+  that corner failed during a major event, plus this time the passive gauge too.
+- The Osiris then failed again 20–30 July. Stn 4A recorded "Very High" deposition
+  in the July period, disregarded as anomalous for lack of directional signal.
+
+**Implications:**
+
+1. The 26–27 June 2025 dusting Simon logged was real, severe, measured by the
+   quarry's own instrument, attributed by the quarry's own consultant to the
+   quarry's own PSV yard, and remediated (dust netting) after the fact. This is
+   the strongest direct counter-example to the verbal claim that village dust
+   "originates from other businesses" — for that event, it did not.
+2. It strengthens the dust-fouling hypothesis for the Zephyr's 21 Jun – 9 Jul
+   PM fault: a severe, weeks-long local dust regime was independently confirmed
+   (directional triggers all month, contaminated deposition gauge, ~270 µg/m³
+   15-min peaks).
+3. Balance: the 13 June exceedance was attributed off-site (NW), and the 30 Jun /
+   4 Jul events got "no issues identified" — the claim isn't wrong for *every*
+   event. But for the flagship logged event, the trail ends inside the fence,
+   at netting that has since been improved.
+
 ## Continuing investigation
 - [x] EA public register + CBC Part B register: done, see permit map above.
 - [ ] EIR requests for inspection/compliance histories on the permits above, if
