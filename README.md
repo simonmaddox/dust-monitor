@@ -103,10 +103,13 @@ hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd
 - An empty cell means no reading. Values are raw as served by the API — including
   implausible ones; filtering happens at evaluation time, not in the archive.
 - Known data quirks to respect when analysing: the Hawcliffe PM2.5 channel served
-  impossible values (500–2,813 µg/m³) from 2025-06-21T06:00Z to 2025-07-09T15:00Z;
-  the `no` channel reports real values in 2021–2023 but near-constant zero after;
-  and `o3` readings during NO₂ spikes are unreliable (electrochemical
-  cross-interference). Raw values are kept regardless — filter, don't edit.
+  implausible values (500–2,813 µg/m³, flat-topped, one station only) from
+  2025-06-21T06:00Z to 2025-07-09T15:00Z — outside that fault window, no station
+  has recorded a single PM2.5 hour above 500 in five years, which is why the
+  plausibility filter uses that cutoff; the `no` channel reports real values in
+  2021–2023 but near-constant zero after; and `o3` readings during NO₂ spikes are
+  unreliable (electrochemical cross-interference). Raw values are kept
+  regardless — filter, don't edit.
 - Stations appear from their install dates (Hawcliffe/March 2021 onward; the full
   five-station network from 2026).
 

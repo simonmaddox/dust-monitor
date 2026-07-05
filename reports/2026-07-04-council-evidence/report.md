@@ -108,8 +108,14 @@ the 2021–22 dust investigations had to leave open.
 ## Finding 2: June–July 2025 — faulty PM2.5 data still published
 
 From **06:00 UTC on 21 June 2025 to 15:00 UTC on 9 July 2025** the Hawcliffe Rd.
-PM2.5 channel reported physically impossible values — **432 hourly readings between
-500 and 2,813 µg/m³** across 19 days (normal levels here are 3–10 µg/m³).
+PM2.5 channel reported physically implausible values — **432 hourly readings
+between 500 and 2,813 µg/m³** across 19 days, while neighbouring stations read
+single digits throughout (normal levels here are 3–10 µg/m³). Sustained
+concentrations of that magnitude — flat-topped near an apparent instrument
+full-scale, persisting through changing winds and rainfall, at one station only —
+indicate a sensor fault rather than an air quality event; for context, no station
+in the network has recorded a single hour above 500 µg/m³ at any other time in
+five years of data.
 
 ![2025 PM2.5 sensor fault](chart3-2025-pm25-fault.png)
 
