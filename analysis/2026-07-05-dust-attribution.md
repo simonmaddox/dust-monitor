@@ -78,6 +78,53 @@ the July 2025 report records further "improvements" to that netting — a
 3.5-year mitigation arc. Notably, **no dust complaints were received** during
 the record month: complaint statistics under-represent the lived experience.
 
+## Feb/Mar 2025, Dec 2025, Dec 2022 reports (obtained 5 Jul 2026)
+
+**February 2025**: the mid-Feb Zephyr coarse cluster is *not* corroborated — one
+Osiris alert (5 Feb, SW morning) drew a full site investigation ("all dust
+suppression working, no visible dust, all stack monitoring within permitted
+levels"), and the 10–19 Feb window shows no Osiris events in a wet month (61%
+rain days). Downgrade the Feb 2025 cluster to probable winter-humidity artefact.
+Stn 9 deposition: 95, "Slightly Elevated".
+
+**March 2025**: the cluster is **corroborated and attributed**. Osiris hit
+~405 µg/m³ (15-min) on 19 Mar — **production was stopped** for investigation
+(none found); 25 Mar's evening exceedance came with the main plant finished but
+**both asphalt plants operational** and "ongoing investigations into…dust
+arising from materials handling within the loadout area that evening"; 27 Mar
+SW evening, nothing found. New named on-site mechanism: **evening loadout /
+materials handling**. Context: extended dry spell, winds toward the sensor, and
+DustScan noting "reduced vegetative screening over the winter months".
+
+**December 2025** (period 20 Nov – 17 Dec; the ×10 PM2.5 events of 26/28 Dec
+and 4 Jan fall in the *January 2026* report): two more candid on-site
+attributions — 21 Nov: "**Loadout making washed ballast and material being sent
+to rail**" tripping the monitor from the SSE (the first explicit documentation
+of rail-ballast loading as an alert-level dust source — directly relevant to
+the Dec 2021 hypothesis); 22 Nov, 22:15: "**dry tip material (which was still
+warm) was being relocated**" by the asphalt team, with a corrective instruction
+issued. Winds 40% from due south (toward the sensor/village).
+
+**December 2022**: "abnormally cold and dry"; several days below freezing
+mid-month with the standing caveat that **water-based suppression can rarely be
+used in freezing conditions** — which explains the Zephyr's 1–16 Dec 2022
+working-hours coarse cluster without any trigger-level event. Deposition modest
+(Stn 9: 76, Low), with two more **off-site** attributions: Stn 10 "adjacent
+building site", Stn 12 "ongoing works at Meadow Farm Marina". The Osiris's
+12-month daily >50 count reached 27 (equiv. 30/yr against the 35 allowed) —
+autumn 2022 was its dustiest run, "the majority may relate to local rather than
+regional PM₁₀ sources".
+
+**Running attribution ledger** (all events with a named cause, either side):
+on-site — KVM screen house seals (Feb 2022), PSV yard netting (Jun 2025),
+Phase 2 sprays off (Aug 2025), ballast loadout (Nov 2025), warm asphalt tip
+material (Nov 2025), loadout-area evening handling (Mar 2025, under
+investigation); off-site — Granite Way corridor dust with sweeper response
+(Aug 2025), ENE morning source (12 Aug 2025), Stn 10 building site (Dec 2022),
+Stn 12 marina works (Dec 2022), NW morning (13 Jun 2025), agricultural at
+Stn 1B (Jan 2023). The picture is genuinely mixed — and every single named
+attribution came from instruments plus investigation, never from assumption.
+
 ## The test that would actually settle it
 
 **Mineralogy.** Mountsorrel stone is a distinctive pink granodiorite; crushed
