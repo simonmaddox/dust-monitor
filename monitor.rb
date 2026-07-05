@@ -24,12 +24,14 @@ module Dust
     'no2'  => { ratio: 2.5, diff: 30.0 },
     'pm25' => { ratio: 1.5, diff: 5.0 }
   }.freeze
-  # EU limit values currently in force (2008/50/EC values, carried by the
-  # 2024/2881 recast until 1 Jan 2030). The stricter 2030 values — NO2 hourly
-  # allowance 18 -> 3, NO2 annual 40 -> 20, PM2.5 annual 25 -> 10, plus new
-  # daily limits (NO2 50, PM2.5 25, 18 exceedances each) — are documented in
-  # the README; switch these constants when they take effect. The :daily
-  # machinery in Limits.check is already built and tested for that day.
+  # Limit values currently in force in the UK (Air Quality Standards Regulations
+  # 2010, same numbers as EU 2008/50/EC). The EU's stricter 2030 values — NO2
+  # hourly allowance 18 -> 3, NO2 annual 40 -> 20, PM2.5 annual 25 -> 10, plus
+  # new daily limits (NO2 50, PM2.5 25, 18 exceedances each) — do NOT bind the
+  # UK post-Brexit; England's own binding path is PM2.5 annual 12 by 2028 and
+  # 10 by 2040 (Environmental Targets (England) Regs 2023), no NO2 tightening.
+  # See README "What changes in 2030". Update these constants only if UK law
+  # changes; the :daily machinery in Limits.check is built and tested for that.
   LIMITS = {
     'no2'  => { hourly: { limit: 200.0, allowed: 18 },
                 annual: { limit: 40.0 } },

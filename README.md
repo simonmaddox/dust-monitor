@@ -68,10 +68,20 @@ stricter ones, aligned closer to WHO guidance:
 This matters locally: Hawcliffe's current behaviour would already breach the 2030
 hourly NO₂ rule (4 exceedance hours by June 2026, vs 3 permitted per year), and its
 2025 annual means (NO₂ 18.6, PM2.5 9.2 µg/m³) sit just under the 2030 annual limits.
-The daily-mean machinery is implemented and tested; when the 2030 values take
-effect, updating the `LIMITS` constant at the top of `monitor.rb` is the only change
-needed. (The UK is not bound by the 2024 directive post-Brexit; current UK law
-retains the same values as the "Now" column.)
+The daily-mean machinery is implemented and tested; if these values are ever
+adopted, updating the `LIMITS` constant at the top of `monitor.rb` is the only
+change needed.
+
+**The UK is not bound by the 2024 directive post-Brexit** (adopted after the
+transition period; nor does it apply in Northern Ireland). The UK's actual
+trajectory: the Air Quality Standards Regulations 2010 carry the "Now" column
+forward as assimilated law, and for PM2.5 England has its own binding path under
+the Environmental Targets (Fine Particulate Matter) (England) Regulations 2023 —
+an interim **12 µg/m³ annual mean by 2028** and **10 µg/m³ by 2040**, reaching
+the EU's 2030 number a decade later. There are currently no plans to tighten the
+NO₂ limits. The monitor therefore alerts against the limits in force in the UK
+today; the 2030 values serve as a health-based benchmark, not a UK compliance
+claim.
 
 ## Findings so far
 
