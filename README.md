@@ -138,7 +138,11 @@ ruby monitor.rb run --dry-run   # same, but print the digest and write nothing
 ruby monitor.rb backfill        # (re)populate history/ from the API's full history
 ruby monitor.rb migrate-columns # one-off: rewrite old id-based CSV headers to slugs
 ruby test/monitor_test.rb       # test suite
+ruby tools/dustcheck.rb 2025-08-12          # cross-reference a dust-diary entry
 ```
+
+Working analyses (source attribution, colourscale comparisons, event
+investigations) live in `analysis/`.
 
 Plain Ruby stdlib (2.6+), no gems. The workflow (`.github/workflows/monitor.yml`)
 runs daily at 06:15 UTC and can be dispatched manually in `run`, `dry-run`, or
