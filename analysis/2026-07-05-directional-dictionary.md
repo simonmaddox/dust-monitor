@@ -9,8 +9,8 @@ is NOT ~1 km away). Use this table to decode DustScan directional readings.*
 
 | Sector | Distance | What's there |
 |---|---|---|
-| N–NNE | 250–600 m | **Granite Way estate** (Mick George, Mixco, estate units), then the A6 / Waitrose roundabout corridor (~416 m NNE) |
-| NNW | 242 m | **LCC Household Waste & Recycling Centre** (the public tip — open weekends) |
+| N–NNE | 250–600 m | **Granite Way corridor** businesses (B Cool and further units; Mixco somewhere along it), then the A6 / Waitrose roundabout (~416 m NNE) |
+| NNW–NW | ~100–300 m | The tight trio, south-to-north from the sensor (positions pinned via Simon's map check, 5 Jul 2026): **Serco yard** (~150 m — Charnwood's waste-collection contractor, i.e. the bin-lorry fleet depot), **Mick George waste transfer station** (~200–300 m, immediately south of the tip), **LCC Household Waste & Recycling Centre** (242 m — open weekends) |
 | NW–W | 250–700 m | Depot environs, Wood Lane site offices (~250 m W), Hawcliffe Rd west |
 | E–ESE | 344–380 m | **Stonehurst Farm complex** (farmyard, motor museum, shop, cafe); village edge beyond |
 | SSE–SE | 195–315 m | **Quarry goods conveyors, a chimney/stack, the rail loadout ("toast rack") corridor** |
@@ -36,9 +36,18 @@ is NOT ~1 km away). Use this table to decode DustScan directional readings.*
   activity (feed, mucking out, unpaved yard traffic in a dry August) is a
   plausible mundane source. The 12 Aug ENE event sits between the farm and the
   A6 corridor.
-- **January 2026's Sunday "W/NW/NNW offsite" spikes point at the tip's sector**
-  (242 m NNW, busiest on Sundays) and the depot environs — a much nearer
-  candidate than any heritage operation.
+- **January 2026's Sunday "W/NW/NNW offsite" spikes point at the Serco / Mick
+  George / tip trio's sector** (~100–300 m NNW–NW). The tip is the one busy on
+  Sundays, so it keeps favourite status — but all three share the bearing, and
+  all are far nearer candidates than any heritage operation.
+- **Street View (July 2011 imagery) shows the Mick George site stockpiling
+  crushed material well above its fence-line screening** — historic context
+  only (predates our archive), but documents the site's operating style and
+  screening height. Current aerial imagery worth checking for present-day
+  stockpile state.
+- **Serco is a new registry entry**: a diesel fleet depot ~150 m from the
+  sensor adds one more council-contracted operation to the "sensor inside a
+  council operational environment" theme (gritters, now bin lorries).
 - **The "other businesses" (Granite Way) are N–NNE of Stn 9** — between the
   sensor and the A6, *not* between the quarry and the village. Estate dust
   reaching the sensor/village-centre needs winds *from* the north (uncommon;
