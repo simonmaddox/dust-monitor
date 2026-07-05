@@ -114,9 +114,54 @@ The same report does add attribution-relevant facts:
   typically observed patterns" in March.
 - No dust complaints were received that period.
 
+## The permit map (looked up 5 Jul 2026)
+
+**EA public register** (waste operations within ~600 m of the Stn 9 sensor):
+
+| Operator | Site | Permit | Activity |
+|---|---|---|---|
+| Tarmac Aggregates | Mountsorrel Quarry, Wood Lane | SP3099VQ | Mining waste operations |
+| Tarmac Aggregates | Mountsorrel Quarry | EB3804HC | Non-hazardous waste physical treatment |
+| Mick George Ltd | Granite Way LE12 7TZ | EB3309MW | Household/commercial/industrial waste **transfer station** |
+| Leicestershire CC | Granite Way LE12 7TZ | GP3099LB | **Household waste recycling centre** (the public tip, takes hazardous waste) |
+| Veolia ES Cleanaway | "Mountsorrel Quarry", Crown Lane | HP3393CF | **Active landfill**, non-biodegradable wastes |
+
+**Charnwood BC Part A/B (LAPPC) register**, Mountsorrel entries:
+
+| Ref | Operator | Site | Process |
+|---|---|---|---|
+| 021A (PG3/8) | Tarmac | Mountsorrel Quarry | Quarry processes (crushing/screening) |
+| 014 (PG3/1) | Tarmac | Readymix plant, Wood Lane | Bulk cement blending |
+| 145 (PG3/1) | **Mixco Concrete Ltd** | Granite Way LE12 7TZ | Bulk cement blending — an independent concrete batching plant |
+| various | Tarmac & others | (mobile plant, registered elsewhere) | Mobile crushing, deployable to any site |
+
+Plus Tarmac's asphalt plant (per Tarmac's own site listing for Granite Way/Wood
+Lane). **At least eight permitted dust-relevant operations, five distinct
+operators** (Tarmac, Mick George, LCC, Veolia, Mixco) share the sector between
+the quarry and the village.
+
+Notable implications:
+
+- The **Veolia landfill sits within the quarry footprint** ("Mountsorrel Quarry,
+  Crown Lane"): dust from its tipping face is visually and directionally
+  indistinguishable from quarry dust while being another company's operation.
+  Tarmac's "not us" can be simultaneously true and unverifiable.
+- The **county council operates its own dusty site** (the household waste centre)
+  on Granite Way — relevant context when asking LCC to adjudicate attribution.
+- Every permit carries **enforceable dust-management conditions**, and the
+  regulators split: EA for the waste operations (including the landfill),
+  Charnwood BC for the Part B processes. A dust complaint tied to a specific
+  operation becomes a *permit-compliance* question with a statutory home.
+- Inspection and compliance histories (EA CAR forms, CBC Part B inspection
+  records) are obtainable by EIR request quoting the permit numbers above.
+- Mineralogy discriminates here too: granite fines (quarry/rail), cementitious
+  dust (Mixco, readymix, crushed concrete), mixed-waste fines (transfer
+  station/tip), and soils (landfill cover) are all distinguishable.
+
 ## Continuing investigation
-- [ ] EA public register: permits for the Granite Way recycling site (dust
-      management conditions, permitted activities).
+- [x] EA public register + CBC Part B register: done, see permit map above.
+- [ ] EIR requests for inspection/compliance histories on the permits above, if
+      and when a specific operation needs testing.
 - [ ] Start the dust diary at Stn 11 locality; pair with monthly directional data.
 - [ ] Collect a physical dust sample next time deposition is visible; hold for
       characterisation.
