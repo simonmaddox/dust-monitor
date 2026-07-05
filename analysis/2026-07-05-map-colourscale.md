@@ -1,4 +1,4 @@
-# Hawcliffe Rd. vs the portal's own PM2.5 colourscale
+# Hawcliffe Rd. vs the portal's own colourscales (PM2.5 and NO₂)
 
 *Working analysis, 5 July 2026 — kept primarily as material for a future letter to
 the MP about the gap between health-based communication scales and frozen UK legal
@@ -65,6 +65,52 @@ No statistical tricks: their scale, their sensor, their words.
 - A council may fairly respond that the colourscale is a communication device, not
   a standard. That is precisely the point worth making to a legislator: the
   communication device tracks WHO health guidance; the legal standard does not.
+
+## The NO₂ colourscale
+
+The portal's NO₂ map bands run 0–4 (Exceptionally clean) in steps of 4 up to
+**40+ = "Exceptionally polluted"**. The anchoring differs tellingly from PM2.5:
+the top band starts at exactly the **UK annual legal limit (40)** — i.e. the map
+calls an hour "exceptionally polluted" when it reaches the concentration the law
+permits as a year-round *average* — while the WHO annual guideline (10) sits down
+at the "Very lightly polluted" boundary.
+
+### Hawcliffe Rd., NO₂ hours per band by year
+
+| Year | Heavily (28–32) | Very heavily (32–36) | Extremely (36–40) | Exceptionally (40+) | Total ≥28 | % of year | Days with a 40+ hour |
+|---|---|---|---|---|---|---|---|
+| 2021 | 68 | 52 | 37 | 279 | 436 | 6.5% | 31 |
+| 2022 | 216 | 135 | 77 | 128 | 556 | 6.4% | 51 |
+| 2023 | 155 | 72 | 41 | 88 | 356 | 4.1% | 23 |
+| 2024 | 317 | 204 | 112 | 236 | 869 | 10.0% | 77 |
+| 2025 | 404 | 285 | 162 | 492 | 1,343 | **15.9%** | **102** |
+| 2026 YTD | 96 | 92 | 34 | 278 | 500 | 11.4% | 50 |
+
+**The trend is the finding**: ≥"Heavily polluted" hours have roughly *quadrupled*
+from the 2023 low (4.1% → 15.9% in 2025), and 2025 had a 40+ µg/m³ hour on 102
+days — more than one day in four. This is independent corroboration that NO₂ at
+this location is deteriorating, consistent with the 2026 exceedance spikes in the
+council report.
+
+### 2026 YTD network comparison, NO₂ (% of hours at/above threshold)
+
+| Station | ≥28 | ≥32 | ≥36 | ≥40 |
+|---|---|---|---|---|
+| Wolsey Way, Loughborough | 31.4% | 24.4% | 19.4% | **15.8%** |
+| **Hawcliffe Rd., Mountsorrel** | 11.4% | 9.2% | 7.1% | 6.3% |
+| Cobden Primary School | 5.8% | 2.7% | 1.0% | 0.5% |
+| Whetstone Way, Whetstone | 4.1% | 1.6% | 0.5% | 0.2% |
+| Ashby Rd, Loughborough | 0.0% | 0.0% | 0.0% | 0.0% |
+
+Two observations beyond Hawcliffe:
+
+- **Wolsey Way is the network's NO₂ hotspot by a wide margin** — "exceptionally
+  polluted" one hour in six, 2.5× Hawcliffe. (Consistent with its 261 µg/m³ hour
+  on 23 June 2026.) Any borough-level advocacy should mention it.
+- **Ashby Rd records *zero* hours at even 28 µg/m³ in 2026** — anomalously clean
+  for a Loughborough roadside site and starkly divergent from Wolsey Way nearby.
+  Worth a question about siting or sensor calibration before treating either as
+  representative.
 
 ## Reproduce
 
