@@ -167,6 +167,26 @@ A supporting ask: whether the site-wide DMMP reviews could include periodic
 **particle characterisation** at Stn 9/Stn 11, which would answer the
 "whose dust" question permanently and by consent.
 
+## Sampling protocol (for when a dusting happens)
+
+Analysis must be independent — not DustScanAQ, who are retained by Tarmac
+(conflict of interest, actual or perceived). Options: University of Leicester
+geology (local, no stake, Mountsorrel granodiorite is their home rock), British
+Geological Survey (Keyworth), or an independent PLM/SEM-EDS lab (e.g. SOCOTEC,
+Lucideon; ~£150–400/sample for PLM characterisation with photomicrographs).
+
+Protocol: (1) photograph the surface clean with a dated marker, let dust
+accumulate, photograph the deposit; (2) scrape with a clean card into a fresh
+sealed bag/jar — no shared brushes; (3) label date, window, location, surface,
+height, facing, weather; (4) **split each sample**, keeping half sealed for
+re-testing; (5) collect a control sample from well outside the corridor;
+(6) buy retail Mountsorrel granite chippings + scrape household concrete dust
+as labelled reference standards for the lab. Ask for percentage composition by
+particle type. Remember what it proves: material *class* (fresh granodiorite
+fines vs cement paste vs asphalt vs soot vs soil), which collapses the source
+list — not a named operator. In recycled Type 1, the cement-paste fraction is
+the discriminator (its rock aggregate may itself be granite).
+
 ## Verdict on the claim as stated
 
 **Plausible in part, unproven, and — crucially — symmetric.** There is a real
