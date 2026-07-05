@@ -38,12 +38,15 @@ contains at least:
    operation), coarse PM at the sensor rose ~55% (6.1 vs 4.0 µg/m³) and the Stn 9
    deposition gauge exceeded its trigger at "High" with directional indication
    SW/W — the rail-loading side.
-2. **Geometry makes the claim unfalsifiable with the existing monitoring** — and
-   symmetrically, unprovable. The quarry pit, toast rack, asphalt plant and Mick
-   George all lie in the same W–SW sector from both Stn 9 and the village, so the
-   8-direction sticky pads cannot separate them. Any party citing directional
-   data to exonerate itself is citing data that cannot exonerate anyone in that
-   sector.
+2. **Geometry partially discriminates — a correction to this note's first
+   draft.** The August 2025 report shows Granite Way's dusty corridor runs
+   **E/SE** of the Stn 9 monitor (towards the Waitrose roundabout), while the
+   quarry pit/PSV yard sector is **SW/W**. The directional record can therefore
+   separate quarry-side from estate-side events — and does: June 2025's
+   exceedances were SW (PSV yard, on-site); several August 2025 events were
+   E/ESE/SE or ENE (off-site). What direction alone still cannot do is separate
+   operators *within* the estate sector (Mick George, the tip, Mixco, the
+   sweeper-served road), nor the on-site facilities within the SW/W sector.
 3. **Trackout blends everyone**: HGVs from all operators share the same exit
    routes; mud/dust carried onto public roads and resuspended by traffic is the
    classic mechanism for village dust complaints, and it has no single owner.
@@ -210,6 +213,31 @@ log entry, with attribution:
    4 Jul events got "no issues identified" — the claim isn't wrong for *every*
    event. But for the flagship logged event, the trail ends inside the fence,
    at netting that has since been improved.
+
+## August 2025 report (obtained 5 Jul 2026): the second log entry resolved
+
+- **12/08/2025 (log entry 1)**: Osiris trigger exceedance "from the east-northeast
+  in the morning… offsite direction" — the logged dusting was real and measured,
+  but attributed **away from both the quarry (SW/W) and Granite Way (E/SE)**.
+  ENE of the monitor is the depot yard / Hawcliffe Road / A6 corridor. The
+  afternoon NO₂ event the same day (→153 µg/m³) is a separate, combustion
+  signature. Verdict: probably *not* Tarmac's dust — the claim scores a
+  confirmed hit here.
+- August 2025 was an exceptional dust month generally: **seven alert days**
+  (6, 12, 14, 22, 26, 27, 28 Aug) in a hot dry spell (rain on 4 days). Ledger:
+  6 Aug — "Granite Way observed to be dusty towards Waitrose roundabout",
+  trackout from the quarry ruled out with photos, **Tarmac road sweeper deployed
+  immediately**; 26 Aug — "sprays in Phase 2 yard had been turned off whilst
+  maintenance works were being carried out" (an acknowledged on-site suppression
+  lapse); 12/14/22/28 Aug — offsite directions, no issues identified.
+- Instrument reliability theme continues: Osiris down 30 Jul – 5 Aug (again);
+  weather station down for at least its third consecutive report (Met Office
+  WOW Mountsorrel used).
+
+**Scorecard across the two corroborated log entries: one each.** June 2025 —
+quarry's PSV yard, remediated. August 2025 — offsite, direction ENE. Neither
+side's narrative survives intact, which is precisely what makes the combined
+record credible: the instruments aren't taking sides, and nor is this analysis.
 
 ## Continuing investigation
 - [x] EA public register + CBC Part B register: done, see permit map above.
