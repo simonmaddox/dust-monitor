@@ -73,6 +73,16 @@ effect, updating the `LIMITS` constant at the top of `monitor.rb` is the only ch
 needed. (The UK is not bound by the 2024 directive post-Brexit; current UK law
 retains the same values as the "Now" column.)
 
+## Findings so far
+
+The archive has already surfaced things worth knowing: 19 hours over the legal
+NO₂ hourly limit in December 2021 (peak 386 µg/m³), a three-week PM2.5 sensor
+fault in mid-2025 still visible in the public feed, and a recurring
+working-hours pattern of large NO₂ spikes in 2026. The evidence — with charts,
+eliminated alternative explanations, and corroboration from the quarry's own
+compliance monitoring — is written up for the local authorities in
+[`reports/2026-07-04-council-evidence/report.md`](reports/2026-07-04-council-evidence/report.md).
+
 ## Data format
 
 `history/<year>.csv` — one row per UTC hour, one file per year:
@@ -92,6 +102,11 @@ hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd
   source), and `o3`. Columns before July 2026 were backfilled retrospectively.
 - An empty cell means no reading. Values are raw as served by the API — including
   implausible ones; filtering happens at evaluation time, not in the archive.
+- Known data quirks to respect when analysing: the Hawcliffe PM2.5 channel served
+  impossible values (500–2,813 µg/m³) from 2025-06-21T06:00Z to 2025-07-09T15:00Z;
+  the `no` channel reports real values in 2021–2023 but near-constant zero after;
+  and `o3` readings during NO₂ spikes are unreliable (electrochemical
+  cross-interference). Raw values are kept regardless — filter, don't edit.
 - Stations appear from their install dates (Hawcliffe/March 2021 onward; the full
   five-station network from 2026).
 
