@@ -39,9 +39,14 @@ is NOT ~1 km away). Use this table to decode DustScan directional readings.*
 - **January 2026's Sunday "W/NW/NNW offsite" spikes point at the tip's sector**
   (242 m NNW, busiest on Sundays) and the depot environs — a much nearer
   candidate than any heritage operation.
-- **The "other businesses" (Granite Way) are N–NNE** — between the sensor and
-  the A6, *not* between the quarry and the village. Estate-sourced dust reaching
-  the village needs northerly winds, which are uncommon here (prevailing S/SW).
+- **The "other businesses" (Granite Way) are N–NNE of Stn 9** — between the
+  sensor and the A6, *not* between the quarry and the village. Estate dust
+  reaching the sensor/village-centre needs winds *from* the north (uncommon;
+  prevailing flow is from the S/SW). **Refinement per receptor**: from the
+  Stn 11 locality the estate lies **WNW**, so ordinary westerlies — which occur
+  regularly (e.g. Aug 2025, Jan 2026 periods) — can carry estate dust there.
+  The estate is a weak candidate for village-centre dust but stays live for the
+  Loughborough Road end on westerly days.
 - **For Simon's own dust at the Stn 11 end**: the nearest candidates, in
   order, are the farm (~130 m), the conveyor/loadout corridor (~350 m SW,
   upwind in prevailing south-westerlies), and the estate/tip (~500 m WNW).
