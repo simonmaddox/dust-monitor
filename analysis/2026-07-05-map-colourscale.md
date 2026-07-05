@@ -53,7 +53,12 @@ an aggressive scale — the ranking it produces is real.
 > "exceptionally polluted" for roughly a thousand hours a year — while the law
 > finds the same location compliant, with headroom, indefinitely.
 
-No statistical tricks: their scale, their sensor, their words.
+No statistical tricks: their scale, their sensor, their words. Note the scope:
+this is **PM2.5**, where UK law sets only an annual-mean limit (25 µg/m³) that
+this location meets several times over — so "compliant indefinitely" is precise,
+not rhetorical. NO₂ is the pollutant where the hourly objective has actually
+been breached (December 2021; see the NO₂ section below) — keep the two claims
+attached to the right pollutant when quoting.
 
 ## Caveats (use them or lose the argument)
 
