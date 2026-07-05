@@ -158,6 +158,19 @@ Notable implications:
   dust (Mixco, readymix, crushed concrete), mixed-waste fines (transfer
   station/tip), and soils (landfill cover) are all distinguishable.
 
+## Dust-log cross-reference (first three entries, checked 5 Jul 2026)
+
+| Log entry | Archive verdict |
+|---|---|
+| **12 Aug 2025, 09:00–12:00** | **Corroborated.** Hawcliffe PM₁₀ 20.7–23.3 vs network ~12–14 in the exact window, coarse fraction ~2× baseline; the known NO₂ event (→153 µg/m³) followed the same afternoon. Morning dust + afternoon combustion = a full working day of intensive local operations. |
+| **26 Jun 17:00 – 27 Jun 09:00, 2025** | Sensor railed (fault period) — but in a single un-railed hour (26 Jun 21:00 UTC) it read **PM2.5 57 / PM₁₀ 66 vs neighbours ~3**. Supports a new hypothesis: the 21 Jun – 9 Jul "sensor fault" may have been *dust-induced* (optics fouled by a real severe dust episode, which the council's published export shows ramping 19–20 Jun). Independent check: the Stn 9 Osiris record in the **June and July 2025 DustScan reports** — the highest-value documents still to obtain. |
+| **27 Mar 2026, all day** | **No signal.** PM₁₀ 4–10, at/below network. Demonstrates the instrument-blindness point: visible deposition is dominated by >10 µm grit that optical PM sensors do not measure at all. |
+
+Scorecard: one corroboration, one probable-but-blinded corroboration with a lead,
+one clean non-detection. All three entries are weekdays. The log is already
+earning its keep — more entries, ideally with a note of which surfaces/direction,
+multiply its value.
+
 ## Continuing investigation
 - [x] EA public register + CBC Part B register: done, see permit map above.
 - [ ] EIR requests for inspection/compliance histories on the permits above, if
