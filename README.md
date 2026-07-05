@@ -106,10 +106,15 @@ hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd
   implausible values (500–2,813 µg/m³, flat-topped, one station only) from
   2025-06-21T06:00Z to 2025-07-09T15:00Z — outside that fault window, no station
   has recorded a single PM2.5 hour above 500 in five years, which is why the
-  plausibility filter uses that cutoff; the `no` channel reports real values in
-  2021–2023 but near-constant zero after; and `o3` readings during NO₂ spikes are
-  unreliable (electrochemical cross-interference). Raw values are kept
-  regardless — filter, don't edit.
+  plausibility filter uses that cutoff (treat the fault's edges, 17–20 June, with
+  caution too: an earlier data revision published by CBC shows elevated values
+  there); the `no` channel reports real values in 2021–2023 but near-constant
+  zero after; and `o3` readings during NO₂ spikes are unreliable (electrochemical
+  cross-interference). Raw values are kept regardless — filter, don't edit.
+- EarthSense appears to recalibrate data retrospectively (CBC's published daily
+  export disagrees with the current feed for 19–20 June 2025), so archived values
+  reflect the feed *as it was when fetched*. This is a feature: the archive
+  preserves a record that the upstream feed may later revise.
 - Stations appear from their install dates (Hawcliffe/March 2021 onward; the full
   five-station network from 2026).
 
@@ -138,9 +143,12 @@ The measurements in `history/` originate from **Zephyr® sensors operated by
 [EarthSense Systems Ltd](https://www.earthsense.co.uk/)** on behalf of
 **Leicestershire County Council**, retrieved from the council's freely accessible
 public portal. This repository republishes them in good faith as public-interest
-environmental data; the sensors are indicative instruments, not reference-grade
-analysers, so treat values accordingly. If you are the data owner and would like
-anything changed or removed, please open an issue.
+environmental data; Charnwood Borough Council already publishes the same
+monitor's data (daily means, all channels) as unrestricted downloads on its
+[Mountsorrel Quarry page](https://www.charnwood.gov.uk/pages/mountsorrel_quarry),
+with which this archive is consistent. The sensors are indicative instruments,
+not reference-grade analysers, so treat values accordingly. If you are the data
+owner and would like anything changed or removed, please open an issue.
 
 The **code** is released under the [MIT License](LICENSE). The MIT licence covers
 the software only, not the measurement data described above.

@@ -45,7 +45,10 @@ Two pieces of context shape everything that follows:
   both frameworks were built around particulates from the quarry, and the
   Mountsorrel AQMA (declared 2011, revoked September 2024) covered PM₁₀ only — but
   it means the NO₂ findings below are probably being looked at here for the first
-  time.
+  time. (CBC does publish daily-mean exports from this monitor — including NO₂ —
+  on its Mountsorrel Quarry web page; however, the hourly objective cannot be
+  assessed from daily means, and a one-hour exceedance dilutes roughly 24-fold in
+  a daily average, which is why these events surface only at hourly resolution.)
 - **The monitor has close combustion neighbours**: the depot's own vehicle fleet,
   the quarry access, and the rail-loading area — useful context when interpreting
   its readings as representative of residential exposure on Hawcliffe Road.
@@ -56,6 +59,9 @@ reference methods. The patterns below are nonetheless strong and internally
 consistent (the same instrument reads *below* its network neighbours on normal
 days). All analysis excludes implausible readings (negative, NO₂ > 1,000,
 PM2.5 > 500 µg/m³); times are UTC unless stated (local is UTC+1 in summer).
+Archive values have been spot-verified against the live API (exact matches,
+including every headline figure) and are consistent with the daily summaries CBC
+publishes on its Mountsorrel Quarry web page.
 
 ## Finding 1: December 2021 — NO₂ over the legal limit 19 times
 
@@ -122,11 +128,15 @@ five years of data.
 These values are still served by the public portal and API without a quality flag;
 averages computed from the raw feed are badly distorted (the station's 2025 annual
 PM2.5 mean computes to ~142 µg/m³ raw vs ~9 with the fault excluded). The
-professional users appear to handle this — the April 2026 compliance report's
-12-month CBC Zephyr summary (89% valid data capture, PM2.5 mean 9.8) is consistent
-with the fault period having been excluded — but anyone using the public feed
-directly has no way to know. A flag or removal at source would fix this for
-everyone.
+professional users already treat the period as invalid: the April 2026 compliance
+report's 12-month CBC Zephyr summary (89% valid data capture, PM2.5 mean 9.8) is
+consistent with the fault having been excluded, and **CBC's own published daily
+export for 2025 leaves the fault period blank**. The remaining step is aligning
+the portal/API feed with that judgement — a flag or removal at source would fix
+it for everyone. (One detail worth passing to EarthSense: the published daily
+export shows elevated means for 19–20 June 2025 where the current API feed shows
+normal values, suggesting the feed has been recalibrated retrospectively at least
+once and that the fault's onset may precede 21 June.)
 
 ## Finding 3: 2026 — recurring NO₂ spikes with a distinctive pattern
 
