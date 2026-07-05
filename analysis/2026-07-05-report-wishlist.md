@@ -2,10 +2,11 @@
 
 *Generated 5 Jul 2026 from a full-archive sweep for event days not yet matched to
 a compliance report. Reports held so far: Dec 2021, Jan 2022, **Feb 2022**, Mar 2022, **Jan 2023**, Jun 2025,
-Jul 2025, Aug 2025, Apr 2026. All priorities now obtained and mined (see the dec-2021-signature and
-dust-attribution notes) except: **January 2026** (period ~17 Dec 2025 – late
-Jan 2026), which contains the ×10 localized PM2.5 events of 26/28 Dec 2025 and
-4 Jan 2026 — the one remaining wishlist item.*
+Jul 2025, Aug 2025, Apr 2026. **Wishlist complete** (5 Jul 2026): all priority reports obtained and mined —
+findings distributed across the dec-2021-signature and dust-attribution notes.
+Reports now held: Dec 2021, Jan 2022, Feb 2022, Mar 2022, Dec 2022, Jan 2023,
+Feb 2025, Mar 2025, Jun 2025, Jul 2025, Aug 2025, Dec 2025, Jan 2026, Apr 2026.
+Still expected in due course: May 2026 and Jun 2026 (the corridor blocks).*
 
 | Priority | Report month(s) | Archive events it covers | Question it answers |
 |---|---|---|---|

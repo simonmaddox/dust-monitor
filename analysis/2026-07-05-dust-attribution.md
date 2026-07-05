@@ -125,6 +125,30 @@ Stn 12 marina works (Dec 2022), NW morning (13 Jun 2025), agricultural at
 Stn 1B (Jan 2023). The picture is genuinely mixed — and every single named
 attribution came from instruments plus investigation, never from assumption.
 
+## January 2026 report (obtained 5 Jul 2026): the wishlist's last item
+
+- **A seventh named on-site attribution**: 6 Jan 2026, exceedances from the south
+  in the morning — "Identified some dust suppression pipes **frozen**. Phase 2
+  processing **switched off**." (The freezing-suppression constraint, this time
+  caught in the act and acted on.)
+- **The ×10 PM2.5 events resolve into two distinct phenomena.** The Zephyr's
+  26/28 Dec + 4 Jan events are *hyper-local and small in absolute terms*
+  (Hawcliffe 16–26 µg/m³ vs neighbours 2–3; Sunday/holiday afternoons-evenings;
+  invisible to the co-located Osiris) — consistent with nearby chimney smoke
+  over one inlet, far below any compliance trigger. Separately, the Osiris
+  recorded its largest spikes of the whole record (**660 and 390 µg/m³,
+  15-minute**) on Sundays 18 and 25 Jan, from the W/NW, attributed "off-site" —
+  while the Zephyr metres away peaked at 29–30 hourly against a regionally
+  elevated evening (~22). Co-located instruments disagreeing 660-vs-29 is the
+  starkest instance yet of the discrepancy saga.
+- The residual pattern: all five fine-particle anomalies fell on **Sundays or
+  holidays**. Candidate Sunday sources (domestic stoves in the evening for the
+  Zephyr events; winter heritage-steam operations to the west in the daytime
+  for the Osiris events) are noted, not pursued — accepted-context material,
+  same posture as the corridor note.
+- The Osiris lost power mid-event on 25 Jan (down to 28 Jan) — the instrument
+  outage catalogue continues.
+
 ## The test that would actually settle it
 
 **Mineralogy.** Mountsorrel stone is a distinctive pink granodiorite; crushed
