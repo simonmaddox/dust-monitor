@@ -91,11 +91,16 @@ at the "Very lightly polluted" boundary.
 | 2025 | 404 | 285 | 162 | 492 | 1,343 | **15.9%** | **102** |
 | 2026 YTD | 96 | 92 | 34 | 278 | 500 | 11.4% | 50 |
 
-**The trend is the finding**: ≥"Heavily polluted" hours have roughly *quadrupled*
-from the 2023 low (4.1% → 15.9% in 2025), and 2025 had a 40+ µg/m³ hour on 102
-days — more than one day in four. This is independent corroboration that NO₂ at
-this location is deteriorating, consistent with the 2026 exceedance spikes in the
-council report.
+**Trend caveat (added 5 Jul 2026 after decomposition)**: the apparent 2024–25
+deterioration is substantially confounded by a **Hawcliffe-only baseline step in
+February 2024** (monthly median 10.8 → 14.7 overnight; neighbouring stations
+flat) — the signature of a sensor recalibration/cartridge change, not air. Band
+counts near the thresholds are inflated from Feb 2024 onward. What survives the
+caveat: the December 2021 breach (pre-step), all >200 µg/m³ exceedance hours
+(13× the step size), and the 2026 corridor episodes (95% co-elevated with Wolsey
+Way — a network-relative signal a local baseline step cannot create). Treat
+"quadrupled since 2023" as unproven; the *episodic* deterioration in 2026 is
+real.
 
 ### 2026 YTD network comparison, NO₂ (% of hours at/above threshold)
 
