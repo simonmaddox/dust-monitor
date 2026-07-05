@@ -38,15 +38,16 @@ contains at least:
    operation), coarse PM at the sensor rose ~55% (6.1 vs 4.0 µg/m³) and the Stn 9
    deposition gauge exceeded its trigger at "High" with directional indication
    SW/W — the rail-loading side.
-2. **Geometry partially discriminates — a correction to this note's first
-   draft.** The August 2025 report shows Granite Way's dusty corridor runs
-   **E/SE** of the Stn 9 monitor (towards the Waitrose roundabout), while the
-   quarry pit/PSV yard sector is **SW/W**. The directional record can therefore
-   separate quarry-side from estate-side events — and does: June 2025's
-   exceedances were SW (PSV yard, on-site); several August 2025 events were
-   E/ESE/SE or ENE (off-site). What direction alone still cannot do is separate
-   operators *within* the estate sector (Mick George, the tip, Mixco, the
-   sweeper-served road), nor the on-site facilities within the SW/W sector.
+2. **Geometry discriminates better than first thought — see the
+   [directional dictionary](2026-07-05-directional-dictionary.md), which
+   supersedes this note's earlier sector guesses (twice corrected).** Computed
+   bearings: works/PSV/screen house SSW–SW; conveyors and rail loadout SSE–SE;
+   Granite Way estate (Mick George, Mixco) N–NNE; the LCC tip NNW; **Stonehurst
+   Farm E–ESE at only 344 m** (and ~130 m from Stn 11). The on-site
+   attributions all validate against this map; the August 2025 "offsite E/ESE"
+   events point at the farm sector, and the January 2026 Sunday spikes at the
+   tip/depot sector. Direction still cannot separate operators within one
+   sector — mineralogy can.
 3. **Trackout blends everyone**: HGVs from all operators share the same exit
    routes; mud/dust carried onto public roads and resuspended by traffic is the
    classic mechanism for village dust complaints, and it has no single owner.
