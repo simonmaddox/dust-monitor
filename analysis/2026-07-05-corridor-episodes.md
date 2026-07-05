@@ -3,6 +3,17 @@
 *Working analysis, 5 July 2026. Source attribution in progress — this note records
 evidence and hypotheses, not conclusions.*
 
+**Purpose and posture.** This note exists to *discriminate* sources, not to pursue
+any of them. Wolsey Way sits beside Loughborough's heritage railway and locomotive
+industry — long-established, publicised, community-supported operations whose
+episodic emissions have a context residents broadly accept. The analytical value
+for the Mountsorrel case is subtractive: identifying which elevated days at
+Hawcliffe Rd are corridor-wide (and plausibly share that accepted context) lets
+the remaining, Mountsorrel-specific signal — the December 2021 morning-pattern
+breach, the chronic working-hours elevation, the deposited dust — stand on its
+own, with no mitigating story attached. Advocacy focus remains Hawcliffe
+Rd./Mountsorrel throughout.
+
 ## The observation
 
 The 2026 NO₂ episodes are not single-station events at Hawcliffe Rd. Daily maxima
@@ -62,12 +73,18 @@ pattern.
   when issued — the quarry's weather station data would also test the
   transport-to-Hawcliffe question).
 
-## Why it matters
+## Why it matters (for the Mountsorrel case)
 
-- For the council report's Finding 3: Hawcliffe's 2026 exceedances are the southern
-  edge of a corridor phenomenon whose epicentre is Wolsey Way, in Loughborough
-  itself — where residents live closer to the peak concentrations (434 µg/m³ is
-  more than double the hourly limit value).
-- Wolsey Way's "exceptionally polluted one hour in six" (see the colourscale note)
-  is not an abstraction: it has an identifiable episodic structure that records
-  held by third parties could explain within a week of asking.
+- If the 2026 corridor blocks turn out to share an accepted context (heritage
+  events, locomotive works campaigns), Hawcliffe's May/June 2026 exceedance hours
+  inherit part of that explanation — and the Mountsorrel-specific case then rests,
+  more cleanly, on what the corridor *cannot* explain: the December 2021 breach
+  (before Wolsey Way existed; morning-anchored, holiday-indifferent), the January
+  2023 hours, the chronic weekday 09:00–15:00 elevation pattern, and the deposited
+  dust record at Stn 9/Stn 11.
+- Conversely, if wind data rules out transport from Loughborough to Mountsorrel
+  during the blocks, the 2026 exceedances return to the local-candidate list
+  (depot, quarry operations) with more force.
+- Either way the discriminating records are cheap to obtain: heritage running
+  calendars are public, and the DustScan May/June 2026 reports will carry the wind
+  roses.
