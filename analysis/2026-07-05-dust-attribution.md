@@ -89,9 +89,32 @@ businesses", and the monitoring geometry means the claim can be neither proved
 nor disproved by the data any party currently collects. The way forward is not
 argument but characterisation.
 
-## Continuing investigation
+## March 2022 checked (report ZLFMSAG003202203, seen 5 Jul 2026)
 
-- [ ] Obtain/check DustScan report for March 2022 (the one clean coarse episode).
+The 22–25 March 2022 coarse episode **does not survive as local-industrial
+evidence**: the DustScan report shows the same period elevated at AURN Nottingham
+and all local instruments alike ("regional as opposed to local signals" — late
+March 2022 saw well-documented continental/Saharan dust transport over England,
+which is coarse-rich). The working-hours timing was coincidence. This confirms
+the instrument caveat above: the Zephyr coarse channel has produced *zero*
+attributable local dust evidence in five years.
+
+The same report does add attribution-relevant facts:
+
+- Stn 9 deposition for the period: **115 mg/m²/day, "Slightly Elevated"**, and the
+  12-month average at Stn 9 stood **above the site threshold (140)**, having been
+  at/over trigger 8 times in 12 months.
+- Monthly directional soiling at Stn 9: Low **from the south** — the shared
+  stock-area/Granite Way sector; 12-month averages Low from SW and W. DustScan's
+  own commentary: causes "under review, as they may be related to site activities
+  such as operations at the PSV yard, Granite Way and/or the toast rack" — the
+  perpetually ambiguous trio, exactly the collinearity problem described above.
+- A further Zephyr data-quality wobble is documented: the CBC Zephyr's PM readings
+  ran **consistently low during February 2022** and "returned to the more
+  typically observed patterns" in March.
+- No dust complaints were received that period.
+
+## Continuing investigation
 - [ ] EA public register: permits for the Granite Way recycling site (dust
       management conditions, permitted activities).
 - [ ] Start the dust diary at Stn 11 locality; pair with monthly directional data.

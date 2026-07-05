@@ -120,7 +120,9 @@ hour_utc,no2_hawcliffe_rd_mountsorrel,pm25_hawcliffe_rd_mountsorrel,no2_ashby_rd
   caution too: an earlier data revision published by CBC shows elevated values
   there); the `no` channel reports real values in 2021–2023 but near-constant
   zero after; and `o3` readings during NO₂ spikes are unreliable (electrochemical
-  cross-interference). Raw values are kept regardless — filter, don't edit.
+  cross-interference); and the quarry's compliance consultant documented the
+  Hawcliffe Zephyr's PM channels reading consistently low during February 2022.
+  Raw values are kept regardless — filter, don't edit.
 - EarthSense appears to recalibrate data retrospectively (CBC's published daily
   export disagrees with the current feed for 19–20 June 2025), so archived values
   reflect the feed *as it was when fetched*. This is a feature: the archive
