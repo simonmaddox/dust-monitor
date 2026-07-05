@@ -1,8 +1,9 @@
 # DustScan monthly report wishlist
 
 *Generated 5 Jul 2026 from a full-archive sweep for event days not yet matched to
-a compliance report. Reports held so far: Dec 2021, Jan 2022, Mar 2022, Jun 2025,
-Jul 2025, Aug 2025, Apr 2026.*
+a compliance report. Reports held so far: Dec 2021, Jan 2022, **Feb 2022**, Mar 2022, **Jan 2023**, Jun 2025,
+Jul 2025, Aug 2025, Apr 2026. Priorities 1 and 2: obtained and mined (see the
+dec-2021-signature and dust-attribution notes).*
 
 | Priority | Report month(s) | Archive events it covers | Question it answers |
 |---|---|---|---|

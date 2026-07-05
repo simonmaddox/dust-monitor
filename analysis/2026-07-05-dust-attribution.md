@@ -64,6 +64,20 @@ DustScan report if available. For the village dust question, the deposition and
 directional gauges (DustScan's) and physical sampling are the right instruments,
 not the Zephyrs.
 
+## Feb 2022 report: a second named on-site attribution (obtained 5 Jul 2026)
+
+The largest deposition event in the record — **223 mg/m²/day, "Very High"** at
+Stn 9 (28 Jan – 25 Feb 2022), directional Moderate from the SW "i.e. from the
+direction of site" — was investigated and attributed to **failing KVM screen
+house seals** ("overly rigid material… allowing dust to escape"), replaced
+Feb–Mar 2022. Alongside June 2025's PSV-yard attribution, the two largest
+attributed dust events in the record both trace to on-site plant/facilities,
+each remediated after monitoring flagged them. The same report first promises
+dust netting "around the stocking grounds in the coming months" (Feb 2022);
+the July 2025 report records further "improvements" to that netting — a
+3.5-year mitigation arc. Notably, **no dust complaints were received** during
+the record month: complaint statistics under-represent the lived experience.
+
 ## The test that would actually settle it
 
 **Mineralogy.** Mountsorrel stone is a distinctive pink granodiorite; crushed
