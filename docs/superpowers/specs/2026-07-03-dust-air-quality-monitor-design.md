@@ -169,6 +169,23 @@ Beyond the alerting pair (NO₂, PM2.5), the archive stores `pm10`, `pm1`, `no` 
 ratio, ozone suppression). Rules and limits remain NO₂/PM2.5 only. History
 backfilled for the new columns.
 
+## PM2.5-only alerting (amendment, 2026-07-10)
+
+NO₂ is removed from alerting entirely — elevation episodes, limit checks, data
+problems, and the digest's daily-means table (all driven by `RULES.keys`, which
+is now `['pm25']`). Rationale: Charnwood BC's environmental health team advised
+(July 2026) that the station's siting — inside the LCC highways depot car park,
+subject to close-proximity vehicle-exhaust interference — does not meet NO₂
+deployment guidelines, so its raw NO₂ cannot support air-quality conclusions.
+
+What stays: the NO₂ channel is archived in full (it remains the analysis-side
+combustion tracer), `PLAUSIBLE_MAX['no2']` remains for read-time filtering in
+analysis tooling, and `LIMITS['no2']` remains as a dormant, documented, tested
+entry (it also keeps the hourly-limit machinery exercised, since no alerted
+species currently has an hourly rule). `state.json` self-cleans on the next run
+(`load_state` rebuilds species state from `RULES.keys`). Reinstating NO₂
+alerting is a one-line `RULES` change if a properly-sited monitor ever exists.
+
 ## History CSV columns (amendment, 2026-07-03)
 
 Columns use **human-readable slugs**, not station numbers: `no2_hawcliffe_rd_mountsorrel`,

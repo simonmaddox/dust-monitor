@@ -14,15 +14,19 @@ module Dust
   SLUG = 'LeicestershireCCPublic'
   PORTAL_URL = "https://portal.earthsense.co.uk/#{SLUG}"
   TARGET_ALIAS = /hawcliffe/i
-  # All species archived from the API. Alert rules (RULES/LIMITS) deliberately
-  # cover only NO2 and PM2.5; the rest are stored for analysis: PM10 (coarse
-  # dust), PM1 (fine/combustion fraction), NO (fresh-exhaust tracer — a high
-  # NO/NO2 ratio means a nearby source), O3 (suppressed by fresh NO plumes).
+  # All species archived from the API. Alerting (RULES.keys drives every digest
+  # section) deliberately covers only PM2.5; the rest are stored for analysis:
+  # NO2 (combustion tracer — alerting removed 10 Jul 2026 after CBC
+  # Environmental Health advised the monitor's siting, inside the LCC highways
+  # depot car park, doesn't meet NO2 deployment guidelines and its raw NO2
+  # can't support air-quality conclusions), PM10 (coarse dust), PM1
+  # (fine/combustion fraction), NO (fresh-exhaust tracer), O3 (suppressed by
+  # fresh NO plumes).
   SPECIES = { 'NO2' => 'no2', 'particulatePM25' => 'pm25', 'particulatePM10' => 'pm10',
               'particulatePM1' => 'pm1', 'NO' => 'no', 'O3' => 'o3' }.freeze
   RULES = {
-    'no2'  => { ratio: 2.5, diff: 30.0 },
     'pm25' => { ratio: 1.5, diff: 5.0 }
+    # 'no2' was { ratio: 2.5, diff: 30.0 } until 10 Jul 2026 — see SPECIES note.
   }.freeze
   # Limit values currently in force in the UK (Air Quality Standards Regulations
   # 2010, same numbers as EU 2008/50/EC). The EU's stricter 2030 values — NO2
@@ -32,6 +36,9 @@ module Dust
   # 10 by 2040 (Environmental Targets (England) Regs 2023), no NO2 tightening.
   # See README "What changes in 2030". Update these constants only if UK law
   # changes; the :daily machinery in Limits.check is built and tested for that.
+  # The 'no2' entry is dormant (only RULES.keys are alerted — see SPECIES note);
+  # it stays here as the documented in-force values and keeps the limit
+  # machinery tested against a species with an hourly rule.
   LIMITS = {
     'no2'  => { hourly: { limit: 200.0, allowed: 18 },
                 annual: { limit: 40.0 } },
@@ -349,11 +356,11 @@ module Dust
           lines << ''
           lines << "**#{pretty_day(day)}**"
           lines << ''
-          lines << '| Station | NO₂ | PM2.5 |'
-          lines << '|---|---|---|'
+          lines << "| Station | #{RULES.keys.map { |sp| LABELS[sp] }.join(' | ')} |"
+          lines << "|---#{'|---' * RULES.size}|"
           aliases.each do |id, name|
             m = day_means[day][id] || {}
-            cells = %w[no2 pm25].map { |sp| m[sp] ? m[sp].round(1) : '–' }
+            cells = RULES.keys.map { |sp| m[sp] ? m[sp].round(1) : '–' }
             lines << "| #{name} | #{cells.join(' | ')} |"
           end
         end

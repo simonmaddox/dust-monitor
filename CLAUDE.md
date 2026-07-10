@@ -53,9 +53,14 @@ the self-healing fetch window (42h) re-covers anything discarded.
 - Known quirks: Hawcliffe PM2.5 is garbage 2025-06-21T06Z – 2025-07-09T15Z; the
   `no` channel is ~all zeros after 2023; `o3` is unreliable during NO₂ spikes
   (cross-interference). See README "Data format".
-- Alert rules cover **NO₂ and PM2.5 only** (calibrated constants in `RULES`);
-  `LIMITS` holds the currently-in-force EU values — the stricter 2030 values are
-  in a comment above it and in the README, and the dormant `:daily` machinery in
+- Alerting covers **PM2.5 only**: `RULES.keys` drives every digest section
+  (episodes, limits, data problems, daily-means table). NO₂ alerting was removed
+  2026-07-10 on CBC Environmental Health's advice (the monitor sits inside the
+  LCC highways depot car park; its siting doesn't meet NO₂ deployment guidelines)
+  — NO₂ is still archived as a combustion tracer for analysis, and `LIMITS`
+  keeps a dormant `no2` entry (documented values + machinery tests). `LIMITS`
+  holds the currently-in-force EU values — the stricter 2030 values are in a
+  comment above it and in the README, and the dormant `:daily` machinery in
   `Limits.check` is tested and ready for that switchover.
 
 ## Context that shapes decisions

@@ -217,8 +217,10 @@ class MonitorTest < Minitest::Test
     { 'zNumber' => 616, 'alias' => 'Whetstone Way, Whetstone',   'locationStartTimeDate' => '2022-06-28 15:12:29' }
   ].freeze
 
-  # Replay of the real 23 June 2026 spike: Hawcliffe ramps to 210/235 µg/m³
-  # while the others sit near 70 — must produce exactly one NO2 alert.
+  # Replay of the real 23 June 2026 NO2 spike: Hawcliffe ramps to 210/235 µg/m³
+  # while the others sit near 70. Since 10 Jul 2026 (CBC EH advice: the monitor's
+  # siting cannot support NO2 conclusions) this must NOT produce NO2 alert
+  # sections — but the NO2 data must still be archived.
   def spike_series
     hours = (10..20).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
     haw   = [20, 25, 30, 28, 26, 30, 35, 60, 210.5, 235.6, 180]
@@ -228,45 +230,71 @@ class MonitorTest < Minitest::Test
       616 => hours.zip(other).to_h { |(t, v)| [t, [v.to_f, 2.9]] } }
   end
 
-  def run_monitor(dir, collector)
-    monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, spike_series),
+  # PM2.5 elevation at Hawcliffe (12 vs ~3 across the others, ratio and diff both
+  # over threshold for 3 consecutive hours) — must still alert.
+  def pm25_spike_series
+    hours = (10..20).map { |h| format('2026-06-23T%02d:00:00+00:00', h) }
+    haw   = [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 12.0, 14.5, 12.0]
+    { 682 => hours.zip(haw).to_h { |(t, v)| [t, [15.0, v]] },
+      856 => hours.to_h { |t| [t, [15.0, 3.1]] },
+      616 => hours.to_h { |t| [t, [15.0, 2.9]] } }
+  end
+
+  def run_monitor(dir, collector, series = spike_series)
+    monitor = Dust::Monitor.new(client: FakeClient.new(STATIONS, series),
                                 archive: Dust::Archive.new(File.join(dir, 'history')),
                                 notifiers: [collector], now: NOW, root: dir)
     capture_io { monitor.run }
     monitor
   end
 
-  def test_spike_day_produces_single_digest
+  def test_no2_spike_day_produces_no_alert_sections
     Dir.mktmpdir do |dir|
       collector = Collector.new
       run_monitor(dir, collector)
+      # digest still fires (fixture day has only 11/24 PM2.5 hours = data problem)
       assert_equal 1, collector.alerts.size
       title, body = collector.alerts.first
       assert_equal 'Air quality digest — Hawcliffe Rd, Tue 23 Jun 2026', title
-      assert_includes body, '## Elevated vs other stations'
-      assert_includes body, 'peak **235.6 µg/m³** vs 77.4'
-      assert_includes body, '## Over EU legal limits'
-      assert_match(/236 µg\/m³ \(limit 200\) — 2nd exceedance this year, 18 permitted/, body)
-      assert_includes body, '## Data problems' # fixture day has only 11/24 hours
-      assert_includes body, '## Daily means (µg/m³)'
-      assert_includes body, 'Hawcliffe Rd., Mountsorrel'
+      refute_includes body, '## Elevated vs other stations'
+      refute_includes body, '## Over EU legal limits'
+      refute_includes body, 'NO₂'
+      assert_includes body, '## Data problems'
+      assert_includes body, '| Station | PM2.5 |'
 
       state = JSON.parse(File.read(File.join(dir, 'state.json')))
-      assert_equal '2026-06-23T18:00:00Z', state['no2']['since']
-      assert_nil state['pm25']['since']
+      assert_nil state['no2']
+      assert state.key?('pm25')
       assert_equal '2026-06-23', state['last_digest_day']
-      assert_equal '2026-06-23T19:00:00Z', state['limits']['no2']['hourly']['last_alerted']
+      assert_nil (state['limits'] || {})['no2']
 
       stations = JSON.parse(File.read(File.join(dir, 'stations.json')))
       assert_equal({ 'alias' => 'Hawcliffe Rd., Mountsorrel', 'slug' => 'hawcliffe_rd_mountsorrel' },
                    stations['682'])
+      # archiving of the NO2 channel continues — analysis still needs the tracer
       header = File.open(File.join(dir, 'history', '2026.csv'), &:readline)
       assert_includes header, 'no2_hawcliffe_rd_mountsorrel'
       refute_includes header, 'no2_682'
+      row = File.readlines(File.join(dir, 'history', '2026.csv')).grep(/T19:00:00Z/).first
+      assert_includes row, '235.6'
 
       # second run the same morning: already digested, nothing new
       run_monitor(dir, collector)
       assert_equal 1, collector.alerts.size
+    end
+  end
+
+  def test_pm25_spike_day_still_alerts
+    Dir.mktmpdir do |dir|
+      collector = Collector.new
+      run_monitor(dir, collector, pm25_spike_series)
+      assert_equal 1, collector.alerts.size
+      body = collector.alerts.first[1]
+      assert_includes body, '## Elevated vs other stations'
+      assert_includes body, 'PM2.5'
+      assert_includes body, 'peak **14.5 µg/m³**'
+      state = JSON.parse(File.read(File.join(dir, 'state.json')))
+      assert_equal '2026-06-23T18:00:00Z', state['pm25']['since']
     end
   end
 
@@ -592,20 +620,21 @@ class DigestFormatTest < Minitest::Test
   end
 
   def test_body_sections
-    episodes = [{ species: 'no2', start: '2026-06-23T18:00:00Z', last: '2026-06-23T20:00:00Z',
-                  ongoing: false, peak: 235.6, others_mean: 77.4 }]
-    limit_titles = ['NO₂ over EU hourly limit at Hawcliffe Rd: 236 µg/m³ (limit 200) — 2nd exceedance this year, 18 permitted']
-    problems = ['2026-06-23: only 11/24 hourly NO₂ values reported']
-    day_means = { '2026-06-23' => { '682' => { 'no2' => 81.4, 'pm25' => nil } } }
+    episodes = [{ species: 'pm25', start: '2026-06-23T18:00:00Z', last: '2026-06-23T20:00:00Z',
+                  ongoing: false, peak: 14.5, others_mean: 3.0 }]
+    limit_titles = ['PM2.5 year-to-date mean over EU annual limit at Hawcliffe Rd: 26.1 µg/m³ (limit 25)']
+    problems = ['2026-06-23: only 11/24 hourly PM2.5 values reported']
+    day_means = { '2026-06-23' => { '682' => { 'pm25' => 8.2 } } }
     aliases = { '682' => 'Hawcliffe Rd., Mountsorrel' }
     body = Dust::Alerts.digest_body(episodes, limit_titles, problems, day_means, aliases)
     assert_includes body, '## Elevated vs other stations'
-    assert_includes body, '**NO₂** 23 Jun 19:00–23 Jun 21:00: peak **235.6 µg/m³** vs 77.4 across the other stations (3.0×)'
+    assert_includes body, '**PM2.5** 23 Jun 19:00–23 Jun 21:00: peak **14.5 µg/m³** vs 3.0 across the other stations (4.8×)'
     assert_includes body, '## Over EU legal limits'
-    assert_includes body, '2nd exceedance this year'
+    assert_includes body, 'year-to-date mean'
     assert_includes body, '## Data problems'
     assert_includes body, '## Daily means (µg/m³)'
-    assert_includes body, '| Hawcliffe Rd., Mountsorrel | 81.4 | – |'
+    assert_includes body, '| Station | PM2.5 |'
+    assert_includes body, '| Hawcliffe Rd., Mountsorrel | 8.2 |'
     assert_includes body, 'https://portal.earthsense.co.uk/LeicestershireCCPublic'
   end
 
@@ -621,12 +650,13 @@ end
 
 class ConstantsTest < Minitest::Test
   def test_rules_calibrated_per_spec
-    assert_equal({ ratio: 2.5, diff: 30.0 }, Dust::RULES['no2'])
     assert_equal({ ratio: 1.5, diff: 5.0 }, Dust::RULES['pm25'])
     assert_equal 2, Dust::PERSIST_HOURS
   end
 
   def test_limits_are_the_currently_in_force_eu_values
+    # NO2 entry is dormant (not in RULES, never alerted) — kept as the
+    # documented in-force values and to exercise the hourly-limit machinery.
     assert_equal({ hourly: { limit: 200.0, allowed: 18 }, annual: { limit: 40.0 } },
                  Dust::LIMITS['no2'])
     assert_equal({ annual: { limit: 25.0 } }, Dust::LIMITS['pm25'])
@@ -635,8 +665,9 @@ class ConstantsTest < Minitest::Test
   def test_archived_species
     assert_equal({ 'NO2' => 'no2', 'particulatePM25' => 'pm25', 'particulatePM10' => 'pm10',
                    'particulatePM1' => 'pm1', 'NO' => 'no', 'O3' => 'o3' }, Dust::SPECIES)
-    # alert rules deliberately cover only NO2 and PM2.5
-    assert_equal %w[no2 pm25], Dust::RULES.keys
+    # alerting deliberately covers only PM2.5 since 10 Jul 2026 (CBC EH: the
+    # monitor's siting can't support NO2 conclusions); NO2 remains archived
+    assert_equal %w[pm25], Dust::RULES.keys
   end
 
   def test_parser_extracts_new_species_and_tolerates_missing_ones

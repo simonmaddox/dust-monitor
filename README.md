@@ -1,9 +1,9 @@
 # dust
 
 Monitors air quality at **Hawcliffe Rd., Mountsorrel** (Leicestershire, UK) and posts
-a **daily digest** when something noteworthy happened: the station was *unusually
-elevated compared to its neighbours*, it went *over the EU legal limits*, or its data
-looks broken. Data comes from Leicestershire County Council's public
+a **daily digest** when something noteworthy happened: PM2.5 at the station was
+*unusually elevated compared to its neighbours*, it went *over the EU legal limits*,
+or its data looks broken. Data comes from Leicestershire County Council's public
 [EarthSense portal](https://portal.earthsense.co.uk/LeicestershireCCPublic); the
 monitor runs unattended on GitHub Actions and notifies by opening a GitHub Issue on
 this repo. Quiet days produce nothing — a notification always means something.
@@ -14,8 +14,8 @@ Every morning at 06:15 UTC the workflow:
 
 1. Authenticates against the EarthSense API (public portals use the portal slug as
    both username and password — there are no secrets in this repo).
-2. Discovers the network's stations, fetches recent hourly NO₂/PM2.5 averages, and
-   appends them to the archive in `history/` (complete hourly data back to March
+2. Discovers the network's stations, fetches recent hourly averages (all
+   channels), and appends them to the archive in `history/` (complete hourly data back to March
    2021; missed runs self-heal).
 3. Evaluates the previous UTC day (or days, after an outage) against the rules below.
 4. If anything is noteworthy, opens a single digest issue with only the sections that
@@ -27,30 +27,44 @@ spent weeks in 2025 claiming up to 2,813 µg/m³. Raw values stay in the archive
 
 ### Digest triggers
 
+Alerting covers **PM2.5 only** (see "Why NO₂ isn't alerted" below).
+
 **Elevated vs the other stations** — a run of ≥ 2 consecutive hours where Hawcliffe
-is far above the average of the other stations (thresholds calibrated on 5 weeks of
+is far above the average of the other stations (threshold calibrated on 5 weeks of
 real data):
 
 | Species | Threshold |
 |---|---|
-| NO₂ | ≥ 2.5× the others' mean **and** ≥ 30 µg/m³ above it |
 | PM2.5 | ≥ 1.5× the others' mean **and** ≥ 5 µg/m³ above it |
 
 **Over the EU legal limits** — the values currently in force (Directive 2008/50/EC,
-carried by the 2024 recast until 2030), with year-to-date exceedance tallies
-recomputed from the archive:
+carried by the 2024 recast until 2030), with year-to-date tallies recomputed from
+the archive:
 
-| Species | Period | Limit | Permitted exceedances |
-|---|---|---|---|
-| NO₂ | 1 hour | 200 µg/m³ | 18 per calendar year |
-| NO₂ | calendar year mean | 40 µg/m³ | — |
-| PM2.5 | calendar year mean | 25 µg/m³ | — |
+| Species | Period | Limit |
+|---|---|---|
+| PM2.5 | calendar year mean | 25 µg/m³ |
 
-Hawcliffe has breached this regime once in the archive: 19 exceedance hours in 2021
-(peak 386 µg/m³) against the 18 permitted.
+**Data problems** — a day where Hawcliffe reported fewer than 18 of 24 hourly PM2.5
+values, or where implausible readings had to be filtered.
 
-**Data problems** — a day where Hawcliffe reported fewer than 18 of 24 hourly values,
-or where implausible readings had to be filtered.
+### Why NO₂ isn't alerted
+
+The monitor originally alerted on NO₂ too (elevation ≥ 2.5× + 30 µg/m³; the in-force
+limits of 200 µg/m³/hour with 18 permitted exceedances and 40 µg/m³ annual mean — the
+archive records 19 exceedance hours in December 2021, peak 386 µg/m³). In July 2026,
+Charnwood Borough Council's environmental health team advised that the station's
+siting — inside the county council's highways depot, where close-proximity vehicle
+exhaust interferes with readings — does not meet NO₂ monitoring deployment
+guidelines, that the NO₂ channel is an inherent feature of the instrument rather
+than something deployed for assessment, and that its raw output cannot support
+conclusions about air quality at locations where people are exposed.
+
+NO₂ alerting was therefore removed on 10 July 2026. The channel is **still
+archived in full** — as an indicator of combustion activity near the monitor it
+remains useful for source analysis — but the monitor no longer treats it as an
+air-quality signal. The limit values stay documented (and tested) in `monitor.rb`
+as dormant machinery.
 
 ## What changes in 2030
 
@@ -65,9 +79,9 @@ stricter ones, aligned closer to WHO guidance:
 | PM2.5 | 1 day | *no limit* | **25 µg/m³**, 18 exceedances/yr |
 | PM2.5 | year | 25 µg/m³ | **10 µg/m³** |
 
-This matters locally: Hawcliffe's current behaviour would already breach the 2030
-hourly NO₂ rule (4 exceedance hours by June 2026, vs 3 permitted per year), and its
-2025 annual means (NO₂ 18.6, PM2.5 9.2 µg/m³) sit just under the 2030 annual limits.
+This matters locally for PM2.5: Hawcliffe's 2025 annual mean (9.2 µg/m³) sits just
+under the 2030 annual limit. (The NO₂ rows are shown for completeness; NO₂ at this
+site is archived but not evaluated — see "Why NO₂ isn't alerted".)
 The daily-mean machinery is implemented and tested; if these values are ever
 adopted, updating the `LIMITS` constant at the top of `monitor.rb` is the only
 change needed.
