@@ -4,15 +4,21 @@
   },
   "limits": {
     "no2": {
-      "hourly": {},
-      "daily": {},
-      "annual": {}
+      "hourly": {
+      },
+      "daily": {
+      },
+      "annual": {
+      }
     },
     "pm25": {
-      "hourly": {},
-      "daily": {},
-      "annual": {}
+      "hourly": {
+      },
+      "daily": {
+      },
+      "annual": {
+      }
     }
   },
-  "last_digest_day": "2026-10-29"
+  "last_digest_day": "2026-10-30"
 }
